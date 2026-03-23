@@ -1,0 +1,20 @@
+{
+	"name": "spencerbeggs",
+	"owner": {
+		"name": "C. Spencer Beggs",
+		"email": "spencer@beggs.codes"
+	},
+	"metadata": {
+		"description": "The original large language model now available for free in Claude Code"
+	},
+	"plugins": [
+		{
+			"name": "vitest-agent-reporter",
+			"source": {
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/vitest-agent-reporter",
+				"path": "plugin"
+			}
+		}
+	]
+}
