@@ -9,10 +9,10 @@
 	},
 	"plugins": [
 		{
-			"name": "vitest-agent-reporter",
+			"name": "vitest-agent",
 			"source": {
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/vitest-agent-reporter",
+				"url": "https://github.com/spencerbeggs/vitest-agent",
 				"path": "plugin"
 			}
 		},
