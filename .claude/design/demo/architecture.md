@@ -7,7 +7,7 @@ updated: 2026-07-10
 last-synced: never
 completeness: 40
 related:
-  - ../plugin-dev/architecture.md
+  - ../plugin-bot/architecture.md
 dependencies: []
 ---
 
@@ -20,7 +20,7 @@ A minimal hello-world package (`@spencerbeggs/demo`, `packages/demo`) that prove
 1. [Overview](#overview)
 2. [Current State](#current-state)
 3. [Rationale](#rationale)
-4. [Related Documentation](#related-documentation)
+4. [Related documentation](#related-documentation)
 
 ---
 
@@ -47,13 +47,13 @@ See `packages/demo/package.json` for the authoritative scripts, exports and publ
 
 **Why keep a demo package:** pipeline changes (bundler upgrades, turbo task graph, publish flow) need a low-stakes package to validate against before real packages exist. demo is that canary.
 
-**Why it matters for plugins:** Claude Code plugins developed in this repo (`plugins/*`) can be paired with companion Node modules built by this same pipeline — demo is the template for that pattern. See [plugin-dev architecture](../plugin-dev/architecture.md).
+**Why it matters for plugins:** Claude Code plugins developed in this repo (`plugins/*`) can be paired with companion Node modules built by this same pipeline — demo is the template for that pattern. See [plugin-bot architecture](../plugin-bot/architecture.md).
 
 ---
 
-## Related Documentation
+## Related documentation
 
-- [plugin-dev architecture](../plugin-dev/architecture.md) — the first repo-native plugin and prospective consumer of the companion-module pattern.
+- [plugin-bot architecture](../plugin-bot/architecture.md) — the first repo-native plugin and prospective consumer of the companion-module pattern.
 - `packages/demo/package.json` — authoritative build/publish configuration.
 
 ---

@@ -1,0 +1,17 @@
+{
+	"version": 1,
+	"refs": [
+		{
+			"source": "plugins/CLAUDE.md",
+			"target": ".claude/design/plugin-bot/architecture.md",
+			"hash": "c20063affbd2f67c7d48a4e601c8b9846bd7cfef9f61bfcf56ef1e19e82fa8ae",
+			"recordedAt": "2026-07-10"
+		},
+		{
+			"source": "plugins/CLAUDE.md",
+			"target": ".claude/design/plugin-bot/upstream-docs.md",
+			"hash": "344193acc1f255ded70370226c3776a2c6c398ad6c733a98187111350282affd",
+			"recordedAt": "2026-07-10"
+		}
+	]
+}

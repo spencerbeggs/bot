@@ -27,7 +27,7 @@
 		"build:prod": "node savvy.build.ts --target prod",
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
 		"ci:test": "CI=\"true\" vitest run --passWithNoTests",
-		"claude": "claude --plugin-dir plugins/bash-plugin-engineer",
+		"claude": "claude --plugin-dir ./plugins/plugin-bot --plugin-dir ./plugins/dogfood",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
@@ -35,7 +35,7 @@
 		"lint:md:fix": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
 		"test": "vitest run --passWithNoTests",
-		"test:coverage": "vitest run --coverage",
+		"test:bats": "bats --recursive plugins",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"

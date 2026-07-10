@@ -9,6 +9,10 @@
 	},
 	"plugins": [
 		{
+			"name": "plugin-bot",
+			"source": "./plugins/plugin-bot"
+		},
+		{
 			"name": "vitest-agent",
 			"source": {
 				"source": "git-subdir",

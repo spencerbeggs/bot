@@ -26,9 +26,9 @@
 				"siteDocs": null
 			}
 		},
-		"plugin-dev": {
-			"path": "plugins/plugin-dev",
-			"designDocsPath": ".claude/design/plugin-dev",
+		"plugin-bot": {
+			"path": "plugins/plugin-bot",
+			"designDocsPath": ".claude/design/plugin-bot",
 			"categories": ["architecture", "documentation", "meta"],
 			"maintainer": "C. Spencer Beggs",
 			"userDocs": {
