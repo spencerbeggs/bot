@@ -1,0 +1,73 @@
+{
+	"name": "@spencerbeggs/bot",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Claude Code plugins",
+	"homepage": "https://github.com/spencerbeggs/bot#readme",
+	"bugs": {
+		"url": "https://github.com/spencerbeggs/bot/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/spencerbeggs/bot.git"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "C. Spencer Beggs",
+		"email": "spencer@beggs.codes",
+		"url": "https://spencerbeg.gs"
+	},
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"build": "turbo run build:dev build:prod --log-order=grouped --log-prefix=none",
+		"build:dev": "node savvy.build.ts --target dev",
+		"build:prod": "node savvy.build.ts --target prod",
+		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
+		"ci:test": "CI=\"true\" vitest run --passWithNoTests",
+		"claude": "claude --plugin-dir plugins/bash-plugin-engineer",
+		"lint": "biome check --max-diagnostics=none",
+		"lint:fix": "biome check --write --max-diagnostics=none",
+		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
+		"lint:md": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc'",
+		"lint:md:fix": "markdownlint-cli2 --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
+		"prepare": "husky",
+		"test": "vitest run --passWithNoTests",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest --watch",
+		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
+		"types:check": "tsgo --noEmit"
+	},
+	"devDependencies": {
+		"@savvy-web/silk": "^2.2.3",
+		"@vitest-agent/plugin": "^1.1.8"
+	},
+	"packageManager": "pnpm@11.11.0+sha512.4463f65fd80ed80d69bc1d4bf163ee94f605c7380fc318bb5b2ebe15f8cd12d49c51a4d59e951b401e764d3b6ca751cbf51bc50ed7001a6bcb4935e684c34882",
+	"engines": {
+		"node": ">=24.11.0"
+	},
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "11.11.0+sha512.4463f65fd80ed80d69bc1d4bf163ee94f605c7380fc318bb5b2ebe15f8cd12d49c51a4d59e951b401e764d3b6ca751cbf51bc50ed7001a6bcb4935e684c34882",
+			"onFail": "ignore"
+		},
+		"runtime": [
+			{
+				"name": "node",
+				"version": "26.5.0",
+				"onFail": "ignore"
+			}
+		]
+	},
+	"publishConfig": {
+		"access": "public",
+		"directory": "dist/dev/pkg",
+		"linkDirectory": true,
+		"targets": {
+			"npm": true
+		}
+	}
+}
