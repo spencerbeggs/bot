@@ -1,0 +1,94 @@
+{
+	"$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
+	"version": "1.0.0",
+	"project": {
+		"name": "spencerbeggs/bot",
+		"type": "monorepo",
+		"repository": "https://github.com/spencerbeggs/bot",
+		"maintainer": "C. Spencer Beggs"
+	},
+	"paths": {
+		"designDocs": ".claude/design",
+		"plans": ".claude/plans",
+		"skills": ".claude/skills",
+		"context": "CLAUDE.md",
+		"localContext": "CLAUDE.local.md"
+	},
+	"modules": {
+		"demo": {
+			"path": "packages/demo",
+			"designDocsPath": ".claude/design/demo",
+			"categories": ["architecture", "testing"],
+			"maintainer": "C. Spencer Beggs",
+			"userDocs": {
+				"readme": null,
+				"repoDocs": null,
+				"siteDocs": null
+			}
+		},
+		"plugin-dev": {
+			"path": "plugins/plugin-dev",
+			"designDocsPath": ".claude/design/plugin-dev",
+			"categories": ["architecture", "documentation", "meta"],
+			"maintainer": "C. Spencer Beggs",
+			"userDocs": {
+				"readme": null,
+				"repoDocs": null,
+				"siteDocs": null
+			}
+		}
+	},
+	"skills": {
+		"baseNamespace": "/",
+		"enabled": [
+			"design-init",
+			"design-validate",
+			"design-update",
+			"design-sync",
+			"design-audit",
+			"design-config",
+			"context-validate",
+			"context-review",
+			"context-update",
+			"plan-create",
+			"plan-validate"
+		]
+	},
+	"quality": {
+		"designDocs": {
+			"requireFrontmatter": true,
+			"requireTOC": true,
+			"minSections": ["Overview", "Current State", "Rationale"]
+		},
+		"userDocs": {
+			"level1": {
+				"targetWordCount": [200, 500],
+				"requireSections": ["Features", "Installation", "Usage"]
+			}
+		},
+		"context": {
+			"rootMaxWords": 2000,
+			"childMaxWords": 1000,
+			"requireDesignDocPointers": true
+		},
+		"plans": {
+			"requireFrontmatter": true,
+			"requiredFields": ["name", "title", "created", "status", "progress"],
+			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"],
+			"progressRange": [0, 100],
+			"stalenessThresholdDays": 30,
+			"archiveAfterDays": 30
+		}
+	},
+	"integration": {
+		"ci": {
+			"enabled": false,
+			"validateOnPR": false,
+			"syncOnMerge": false
+		},
+		"git": {
+			"trackDesignDocs": true,
+			"requireReviewForChanges": false
+		}
+	}
+}
