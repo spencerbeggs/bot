@@ -30,9 +30,6 @@ catalogs:
     '@types/node':
       specifier: ^26.1.1
       version: 26.1.1
-    '@typescript/native-preview':
-      specifier: ^7.0.0-dev.20260630.1
-      version: 7.0.0-dev.20260707.2
     typescript:
       specifier: ^7.0.2
       version: 7.0.2
@@ -62,9 +59,6 @@ importers:
       '@types/node':
         specifier: catalog:silk
         version: 26.1.1
-      '@typescript/native-preview':
-        specifier: catalog:silk
-        version: 7.0.0-dev.20260707.2
       typescript:
         specifier: catalog:silk
         version: 7.0.2
@@ -4441,6 +4435,7 @@ snapshots:
       '@typescript/native-preview-linux-x64': 7.0.0-dev.20260707.2
       '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260707.2
       '@typescript/native-preview-win32-x64': 7.0.0-dev.20260707.2
+    optional: true
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true

@@ -38,7 +38,7 @@
 		"test:bats": "bats --recursive plugins",
 		"test:watch": "vitest --watch",
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
-		"types:check": "tsgo --noEmit"
+		"types:check": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@savvy-web/silk": "^2.3.1",
