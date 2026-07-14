@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Repin plugin sources to source repo HEADs
         run: bash lib/scripts/repin-plugins.sh
@@ -29,6 +30,7 @@ jobs:
       - name: Open repin PR if anything changed
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ github.token }}
           branch: ci/repin-plugins
           title: "ci(marketplace): repin plugin sources to latest releases"
           commit-message: "ci(marketplace): repin plugin sources to latest releases"

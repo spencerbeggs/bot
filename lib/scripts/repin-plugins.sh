@@ -10,22 +10,27 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MANIFEST="$ROOT/.claude-plugin/marketplace.json"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
 
 repin_plugin() {
 	local name="$1"
-	local url sha version tmp
+	local url path sha version tmp
 	url="$(jq -r --arg name "$name" '.plugins[] | select(.name == $name) | .source.url' "$MANIFEST")"
-	sha="$(git ls-remote "$url" HEAD | awk '{print $1}')"
-	if [ -z "$sha" ]; then
-		echo "could not resolve HEAD of $url" >&2
+	path="$(jq -r --arg name "$name" '.plugins[] | select(.name == $name) | .source.path' "$MANIFEST")"
+	git clone --quiet --depth 1 "$url" "$TMP/$name"
+	sha="$(git -C "$TMP/$name" rev-parse HEAD)"
+	if [ ! -f "$TMP/$name/$path/.claude-plugin/plugin.json" ]; then
+		echo "refusing to pin $name: $path/.claude-plugin/plugin.json missing at $sha" >&2
 		return 1
 	fi
+	version="$(jq -r .version "$TMP/$name/$path/.claude-plugin/plugin.json")"
 	tmp="$(mktemp)"
 	jq --tab --arg name "$name" --arg sha "$sha" \
 		'(.plugins[] | select(.name == $name) | .source).sha = $sha' \
 		"$MANIFEST" > "$tmp"
 	mv "$tmp" "$MANIFEST"
-	echo "pinned $name to $sha"
+	echo "pinned $name@$version to $sha"
 }
 
 repin_plugin vitest-agent
