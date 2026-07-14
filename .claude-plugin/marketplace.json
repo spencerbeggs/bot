@@ -17,7 +17,8 @@
 			"source": {
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/vitest-agent",
-				"path": "plugin"
+				"path": "plugin",
+				"sha": "a3b70c2838374834b950c0cb79c11322d0f0f6af"
 			}
 		},
 		{
@@ -25,7 +26,8 @@
 			"source": {
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/design-docs-plugin",
-				"path": "plugin"
+				"path": "plugin",
+				"sha": "8ac11927f0bcc00a14782db452208215e237156b"
 			}
 		}
 	]

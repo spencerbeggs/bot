@@ -1,0 +1,45 @@
+name: Repin plugin sources
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+  repository_dispatch:
+    types: [plugin-release]
+
+concurrency:
+  group: repin-plugins
+  cancel-in-progress: false
+
+jobs:
+  repin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Repin plugin sources to source repo HEADs
+        run: bash lib/scripts/repin-plugins.sh
+
+      - name: Open repin PR if anything changed
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          branch: ci/repin-plugins
+          title: "ci(marketplace): repin plugin sources to latest releases"
+          commit-message: "ci(marketplace): repin plugin sources to latest releases"
+          signoff: true
+          body: |
+            Automated repin of the git-subdir plugin sources in
+            `.claude-plugin/marketplace.json` to the current HEAD of
+            `spencerbeggs/vitest-agent` and `spencerbeggs/design-docs-plugin`,
+            run by the repin-plugins workflow.
+
+            Signed-off-by: C. Spencer Beggs <spencer@beggs.codes>
+          delete-branch: true
