@@ -1,3 +1,7 @@
+# Repins the git-subdir plugin sources in .claude-plugin/marketplace.json to
+# their release commits (see lib/scripts/repin-plugins.sh) and commits the
+# result directly to main. Pushes and API calls use the GitHub App token, not
+# the default workflow token.
 name: Repin plugin sources
 
 on:
@@ -11,39 +15,51 @@ concurrency:
   group: repin-plugins
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   repin:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
+      - name: Generate App Token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: spencerbeggs
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
-          persist-credentials: false
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Repin plugin sources to release commits
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           EVENT_REPO: ${{ github.event.client_payload.repository }}
           EVENT_SHA: ${{ github.event.client_payload.sha }}
         run: bash lib/scripts/repin-plugins.sh "$EVENT_REPO" "$EVENT_SHA"
 
-      - name: Open repin PR if anything changed
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ github.token }}
-          branch: ci/repin-plugins
-          title: "ci(marketplace): repin plugin sources to latest releases"
-          commit-message: "ci(marketplace): repin plugin sources to latest releases"
-          signoff: true
-          body: |
-            Automated repin of the git-subdir plugin sources in
-            `.claude-plugin/marketplace.json` to their latest release commits
-            (`spencerbeggs/vitest-agent`, `spencerbeggs/design-docs-plugin`,
-            `spencerbeggs/effected`), run by the repin-plugins workflow.
+      - name: Commit repin to main if anything changed
+        env:
+          BOT_NAME: ${{ steps.app-token.outputs.app-slug }}[bot]
+          BOT_EMAIL: ${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
 
-            Signed-off-by: C. Spencer Beggs <spencer@beggs.codes>
-          delete-branch: true
+          if git diff --quiet -- .claude-plugin/marketplace.json; then
+            echo "::notice::Pins already current; nothing to do."
+            exit 0
+          fi
+
+          git config user.name "$BOT_NAME"
+          git config user.email "$BOT_EMAIL"
+
+          git add .claude-plugin/marketplace.json
+          git commit --signoff -m "ci(marketplace): repin plugin sources to latest releases"
+          git push origin HEAD:main
+
+          echo "::notice::Pushed repin commit $(git rev-parse HEAD) to main."
