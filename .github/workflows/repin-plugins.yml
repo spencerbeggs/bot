@@ -24,8 +24,12 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Repin plugin sources to source repo HEADs
-        run: bash lib/scripts/repin-plugins.sh
+      - name: Repin plugin sources to release commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_REPO: ${{ github.event.client_payload.repository }}
+          EVENT_SHA: ${{ github.event.client_payload.sha }}
+        run: bash lib/scripts/repin-plugins.sh "$EVENT_REPO" "$EVENT_SHA"
 
       - name: Open repin PR if anything changed
         uses: peter-evans/create-pull-request@v7
@@ -37,9 +41,9 @@ jobs:
           signoff: true
           body: |
             Automated repin of the git-subdir plugin sources in
-            `.claude-plugin/marketplace.json` to the current HEAD of
-            `spencerbeggs/vitest-agent` and `spencerbeggs/design-docs-plugin`,
-            run by the repin-plugins workflow.
+            `.claude-plugin/marketplace.json` to their latest release commits
+            (`spencerbeggs/vitest-agent`, `spencerbeggs/design-docs-plugin`,
+            `spencerbeggs/effected`), run by the repin-plugins workflow.
 
             Signed-off-by: C. Spencer Beggs <spencer@beggs.codes>
           delete-branch: true

@@ -29,6 +29,15 @@
 				"path": "plugin",
 				"sha": "8ac11927f0bcc00a14782db452208215e237156b"
 			}
+		},
+		{
+			"name": "effected",
+			"source": {
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/effected",
+				"path": "plugin",
+				"sha": "6dcef01ede2496818922e307afe3a88f4476af6f"
+			}
 		}
 	]
 }
