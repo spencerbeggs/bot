@@ -38,6 +38,15 @@
 				"path": "plugin",
 				"sha": "507d90f7cf89a8c9e704e51dd1b603e3a6956be1"
 			}
+		},
+		{
+			"name": "api-docs",
+			"source": {
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor",
+				"path": "plugin",
+				"sha": "4f0c654a04727181a53381278fc1ff4ed7910b43"
+			}
 		}
 	]
 }
