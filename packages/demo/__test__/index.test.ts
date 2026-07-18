@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Foo } from "../src/index.ts";
-import { Bar } from "../src/index.ts";
+import type { Foo } from "../src/index.js";
+import { Bar } from "../src/index.js";
 
 describe("Bar class", () => {
 	it("should create an instance of Bar", () => {

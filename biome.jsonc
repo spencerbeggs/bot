@@ -1,26 +1,5 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.1/schema.json",
 	"extends": ["@savvy-web/silk/biome"],
-	"root": true,
-	"overrides": [
-		{
-			// Plugin monitors and their tests run uncompiled via Node type
-			// stripping (node script.ts), which does not rewrite import
-			// specifiers — relative imports must use the real .ts extension,
-			// not the emitted-.js convention the shared config enforces.
-			"includes": ["**/monitors/**", "**/__test__/**"],
-			"linter": {
-				"rules": {
-					"correctness": {
-						"useImportExtensions": {
-							"level": "error",
-							"options": {
-								"forceJsExtensions": false
-							}
-						}
-					}
-				}
-			}
-		}
-	]
+	"root": true
 }
