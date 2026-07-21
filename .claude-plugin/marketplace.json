@@ -18,7 +18,7 @@
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/vitest-agent",
 				"path": "plugin",
-				"sha": "68a6b2187d464db95dfcd83f3f09f272a33b1554"
+				"sha": "39014c88d77702b1674218cc44b37d708839826e"
 			}
 		},
 		{
@@ -36,7 +36,7 @@
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/effected",
 				"path": "plugin",
-				"sha": "a125c05d19b8a80150d6e968a58d0812622bad76"
+				"sha": "0aa7bcecf88192435b319ba40283c9843ff00af8"
 			}
 		},
 		{
