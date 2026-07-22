@@ -2,10 +2,10 @@
 // <plugin>/__test__/watch-<thing>.test.ts. Tests drive the monitor's exported
 // handlers through the pure debounceStep — no filesystem, no polling loop.
 import { describe, expect, it } from "vitest";
-import type { DebounceState } from "../monitors/lib/poll-monitor.ts";
-import { debounceStep } from "../monitors/lib/poll-monitor.ts";
-import type { ArtifactSample } from "../monitors/watch-example.ts";
-import { handlers } from "../monitors/watch-example.ts";
+import type { DebounceState } from "../monitors/lib/poll-monitor.js";
+import { debounceStep } from "../monitors/lib/poll-monitor.js";
+import type { ArtifactSample } from "../monitors/watch-example.js";
+import { handlers } from "../monitors/watch-example.js";
 
 const STABLE_POLLS = 3;
 

@@ -9,8 +9,8 @@
 import { globSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { PollSampleHandlers } from "./lib/poll-monitor.ts";
-import { invokedDirectly, runPollMonitor } from "./lib/poll-monitor.ts";
+import type { PollSampleHandlers } from "./lib/poll-monitor.js";
+import { invokedDirectly, runPollMonitor } from "./lib/poll-monitor.js";
 
 const ROOT = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 const POLL_MS = 2000;
