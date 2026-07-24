@@ -10,13 +10,18 @@
 	"plugins": [
 		{
 			"name": "plugin-bot",
-			"source": "./plugins/plugin-bot"
+			"source": {
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/bot.git",
+				"path": "plugins/plugin-bot",
+				"sha": "6cfde55476cd8ed126f6bd60bebd173ca8e7e0b1"
+			}
 		},
 		{
 			"name": "vitest-agent",
 			"source": {
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/vitest-agent",
+				"url": "https://github.com/spencerbeggs/vitest-agent.git",
 				"path": "plugin",
 				"sha": "8cba76025762cfa1dca24e6daafe2e3dc7c14924"
 			}
@@ -25,7 +30,7 @@
 			"name": "design-docs",
 			"source": {
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/design-docs-plugin",
+				"url": "https://github.com/spencerbeggs/design-docs-plugin.git",
 				"path": "plugin",
 				"sha": "3c6c389b6383e2e67961e60fd844e24d69758075"
 			}
@@ -34,7 +39,7 @@
 			"name": "effected",
 			"source": {
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/effected",
+				"url": "https://github.com/spencerbeggs/effected.git",
 				"path": "plugin",
 				"sha": "9dbea50a1de276d4ab349e6be445e2e1f433a7ae"
 			}
@@ -43,7 +48,7 @@
 			"name": "api-docs",
 			"source": {
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor",
+				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor.git",
 				"path": "plugin",
 				"sha": "4f0c654a04727181a53381278fc1ff4ed7910b43"
 			}

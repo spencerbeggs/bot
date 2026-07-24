@@ -1,65 +1,50 @@
-# Repins the git-subdir plugin sources in .claude-plugin/marketplace.json to
-# their release commits (see lib/scripts/repin-plugins.sh) and commits the
-# result directly to main. Pushes and API calls use the GitHub App token, not
-# the default workflow token.
-name: Repin plugin sources
-
+name: Repin Claude Code Plugins
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 6 * * *"
+    inputs:
+      name:
+        description: Name of the plugin to repin
+        required: false
+        type: string
+      sha:
+        description: Commit SHA to repin to
+        required: false
+        type: string
+      path:
+        description: The path to the plugin root in the repository
+        required: false
+        type: string
+      json:
+        description: JSON string of the plugin's marketplace.json file
+        required: false
+        type: string
   repository_dispatch:
     types: [plugin-release]
-
+permissions:
+  contents: write
+  pull-requests: write
 concurrency:
   group: repin-plugins
   cancel-in-progress: false
-
-permissions:
-  contents: read
-
 jobs:
   repin:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - name: Generate App Token
-        id: app-token
-        uses: actions/create-github-app-token@v3
+      - uses: actions/checkout@v7
         with:
-          client-id: ${{ vars.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: spencerbeggs
-
-      - name: Checkout repository
-        uses: actions/checkout@v7
+          fetch-depth: 0
+      - uses: spencerbeggs/claude-code-marketplace-manager@dev
         with:
-          fetch-depth: 1
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Repin plugin sources to release commits
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          EVENT_REPO: ${{ github.event.client_payload.repository }}
-          EVENT_SHA: ${{ github.event.client_payload.sha }}
-        run: bash lib/scripts/repin-plugins.sh "$EVENT_REPO" "$EVENT_SHA"
-
-      - name: Commit repin to main if anything changed
-        env:
-          BOT_NAME: ${{ steps.app-token.outputs.app-slug }}[bot]
-          BOT_EMAIL: ${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
-        run: |
-          set -euo pipefail
-
-          if git diff --quiet -- .claude-plugin/marketplace.json; then
-            echo "::notice::Pins already current; nothing to do."
-            exit 0
-          fi
-
-          git config user.name "$BOT_NAME"
-          git config user.email "$BOT_EMAIL"
-
-          git add .claude-plugin/marketplace.json
-          git commit --signoff -m "ci(marketplace): repin plugin sources to latest releases"
-          git push origin HEAD:main
-
-          echo "::notice::Pushed repin commit $(git rev-parse HEAD) to main."
+          app-client-id: ${{ secrets.APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.name || github.event.client_payload.name }}
+          sha: ${{ github.event_name == 'workflow_dispatch' && inputs.sha || github.event.client_payload.sha }}
+          path: ${{ github.event_name == 'workflow_dispatch' && inputs.path || github.event.client_payload.path }}
+          json: ${{ github.event_name == 'workflow_dispatch' && inputs.json || github.event.client_payload.json }}
+          # main's "workflow" ruleset restricts PRs to allowed_merge_methods: [squash] —
+          # rebase/merge are rejected by the auto-merge GraphQL call at runtime.
+          auto-merge: "squash"
+          mode: "pr"
