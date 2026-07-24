@@ -14,7 +14,7 @@
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/bot.git",
 				"path": "plugins/plugin-bot",
-				"sha": "6cfde55476cd8ed126f6bd60bebd173ca8e7e0b1"
+				"sha": "382f2fba05f39a13e7ce0ef09487b3a92d97cccc"
 			}
 		},
 		{
