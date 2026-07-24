@@ -1,0 +1,39 @@
+name: Re-pin plugins2
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: Name of the plugin to repin
+        required: false
+        type: string
+      sha:
+        description: Commit SHA to repin to
+        required: false
+        type: string
+      path:
+        description: Path to the plugin's marketplace.json file
+        required: false
+        type: string
+      json:
+        description: JSON string of the plugin's marketplace.json file
+        required: false
+        type: string
+jobs:
+  repin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: spencerbeggs/claude-code-marketplace-manager@dev
+        with:
+          app-client-id: ${{ secrets.APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          name: ${{ inputs.name || '' }}
+          sha: ${{ inputs.sha || '' }}
+          path: ${{ inputs.path || '' }}
+          json: ${{ inputs.json || '' }}
+          mode: "pr"
