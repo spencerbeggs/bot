@@ -47,4 +47,4 @@ jobs:
           # main's "workflow" ruleset restricts PRs to allowed_merge_methods: [squash] —
           # rebase/merge are rejected by the auto-merge GraphQL call at runtime.
           # auto-merge: "squash"
-          commit: "pr"
+          mode: "commit"
