@@ -23,7 +23,7 @@
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/vitest-agent.git",
 				"path": "plugin",
-				"sha": "97777eb9c79d39c0bc8648821c26e16f014ed18f"
+				"sha": "77c851f8b08f5b39925650fe96a5c831a0cf720d"
 			}
 		},
 		{
