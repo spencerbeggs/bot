@@ -1,56 +1,56 @@
 {
-	"name": "spencerbeggs",
-	"owner": {
-		"name": "C. Spencer Beggs",
-		"email": "spencer@beggs.codes"
-	},
 	"metadata": {
 		"description": "The original large language model now available for free in Claude Code"
+	},
+	"name": "spencerbeggs",
+	"owner": {
+		"email": "spencer@beggs.codes",
+		"name": "C. Spencer Beggs"
 	},
 	"plugins": [
 		{
 			"name": "plugin-bot",
 			"source": {
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/bot.git",
 				"path": "plugins/plugin-bot",
-				"sha": "382f2fba05f39a13e7ce0ef09487b3a92d97cccc"
+				"sha": "382f2fba05f39a13e7ce0ef09487b3a92d97cccc",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/bot.git"
 			}
 		},
 		{
 			"name": "vitest-agent",
 			"source": {
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/vitest-agent.git",
 				"path": "plugin",
-				"sha": "f950508b75e97fb66ddf59b324a0df87d0a239f6"
+				"sha": "f950508b75e97fb66ddf59b324a0df87d0a239f6",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/vitest-agent.git"
 			}
 		},
 		{
 			"name": "design-docs",
 			"source": {
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/design-docs-plugin.git",
 				"path": "plugin",
-				"sha": "180d84d82b76d29453a6043c91f4a9a3b655969d"
+				"sha": "180d84d82b76d29453a6043c91f4a9a3b655969d",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/design-docs-plugin.git"
 			}
 		},
 		{
 			"name": "effected",
 			"source": {
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/effected.git",
 				"path": "plugin",
-				"sha": "e455718803130825bfc858cadd951f5376c25ec9"
+				"sha": "e455718803130825bfc858cadd951f5376c25ec9",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/effected.git"
 			}
 		},
 		{
 			"name": "api-docs",
 			"source": {
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor.git",
 				"path": "plugin",
-				"sha": "503903c37f6626305255a4588a73a52d6b545d91"
+				"sha": "503903c37f6626305255a4588a73a52d6b545d91",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor.git"
 			}
 		}
 	]

@@ -1,12 +1,12 @@
 {
-	"name": "plugin-bot",
-	"description": "Development plugin for managing and testing other plugins within the bot ecosystem.",
-	"version": "0.1.0",
 	"author": {
 		"name": "C. Spencer Beggs",
 		"url": "https://spencerbeg.gs"
 	},
+	"description": "Development plugin for managing and testing other plugins within the bot ecosystem.",
 	"homepage": "https://github.com/spencerbeggs/bot#readme",
+	"license": "MIT",
+	"name": "plugin-bot",
 	"repository": "https://github.com/spencerbeggs/bot.git",
-	"license": "MIT"
+	"version": "0.1.0"
 }
