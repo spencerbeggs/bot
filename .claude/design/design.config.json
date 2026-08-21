@@ -1,25 +1,22 @@
 {
 	"$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
-	"version": "1.0.0",
-	"project": {
-		"name": "spencerbeggs/bot",
-		"type": "monorepo",
-		"repository": "https://github.com/spencerbeggs/bot",
-		"maintainer": "C. Spencer Beggs"
-	},
-	"paths": {
-		"designDocs": ".claude/design",
-		"plans": ".claude/plans",
-		"skills": ".claude/skills",
-		"context": "CLAUDE.md",
-		"localContext": "CLAUDE.local.md"
+	"integration": {
+		"ci": {
+			"enabled": false,
+			"syncOnMerge": false,
+			"validateOnPR": false
+		},
+		"git": {
+			"requireReviewForChanges": false,
+			"trackDesignDocs": true
+		}
 	},
 	"modules": {
 		"demo": {
-			"path": "packages/demo",
-			"designDocsPath": ".claude/design/demo",
 			"categories": ["architecture", "testing"],
+			"designDocsPath": ".claude/design/demo",
 			"maintainer": "C. Spencer Beggs",
+			"path": "packages/demo",
 			"userDocs": {
 				"readme": null,
 				"repoDocs": null,
@@ -27,14 +24,53 @@
 			}
 		},
 		"plugin-bot": {
-			"path": "plugins/plugin-bot",
-			"designDocsPath": ".claude/design/plugin-bot",
 			"categories": ["architecture", "documentation", "meta"],
+			"designDocsPath": ".claude/design/plugin-bot",
 			"maintainer": "C. Spencer Beggs",
+			"path": "plugins/plugin-bot",
 			"userDocs": {
 				"readme": null,
 				"repoDocs": null,
 				"siteDocs": null
+			}
+		}
+	},
+	"paths": {
+		"context": "CLAUDE.md",
+		"designDocs": ".claude/design",
+		"localContext": "CLAUDE.local.md",
+		"plans": ".claude/plans",
+		"skills": ".claude/skills"
+	},
+	"project": {
+		"maintainer": "C. Spencer Beggs",
+		"name": "spencerbeggs/bot",
+		"repository": "https://github.com/spencerbeggs/bot",
+		"type": "monorepo"
+	},
+	"quality": {
+		"context": {
+			"childMaxWords": 1000,
+			"requireDesignDocPointers": true,
+			"rootMaxWords": 2000
+		},
+		"designDocs": {
+			"minSections": ["Overview", "Current State", "Rationale"],
+			"requireFrontmatter": true,
+			"requireTOC": true
+		},
+		"plans": {
+			"archiveAfterDays": 30,
+			"progressRange": [0, 100],
+			"requiredFields": ["name", "title", "created", "status", "progress"],
+			"requireFrontmatter": true,
+			"stalenessThresholdDays": 30,
+			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"]
+		},
+		"userDocs": {
+			"level1": {
+				"requireSections": ["Features", "Installation", "Usage"],
+				"targetWordCount": [200, 500]
 			}
 		}
 	},
@@ -54,41 +90,5 @@
 			"plan-validate"
 		]
 	},
-	"quality": {
-		"designDocs": {
-			"requireFrontmatter": true,
-			"requireTOC": true,
-			"minSections": ["Overview", "Current State", "Rationale"]
-		},
-		"userDocs": {
-			"level1": {
-				"targetWordCount": [200, 500],
-				"requireSections": ["Features", "Installation", "Usage"]
-			}
-		},
-		"context": {
-			"rootMaxWords": 2000,
-			"childMaxWords": 1000,
-			"requireDesignDocPointers": true
-		},
-		"plans": {
-			"requireFrontmatter": true,
-			"requiredFields": ["name", "title", "created", "status", "progress"],
-			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"],
-			"progressRange": [0, 100],
-			"stalenessThresholdDays": 30,
-			"archiveAfterDays": 30
-		}
-	},
-	"integration": {
-		"ci": {
-			"enabled": false,
-			"validateOnPR": false,
-			"syncOnMerge": false
-		},
-		"git": {
-			"trackDesignDocs": true,
-			"requireReviewForChanges": false
-		}
-	}
+	"version": "1.0.0"
 }
