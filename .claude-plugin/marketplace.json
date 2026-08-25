@@ -39,7 +39,7 @@
 			"name": "effected",
 			"source": {
 				"path": "plugin",
-				"sha": "522202a0a9d210677b7459e2732661860be60d8c",
+				"sha": "5371559cdae5f03c5a4971adadb6096e4e775de9",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/effected.git"
 			}
