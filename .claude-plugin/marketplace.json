@@ -21,7 +21,7 @@
 			"name": "vitest-agent",
 			"source": {
 				"path": "plugin",
-				"sha": "9808732734d3853d88b8f9341a5e2e91e19211c0",
+				"sha": "3ba644ff26c5dc0a7ad94149c6641809d8221c6e",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/vitest-agent.git"
 			}
