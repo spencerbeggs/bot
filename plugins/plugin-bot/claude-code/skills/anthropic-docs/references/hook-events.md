@@ -1,6 +1,6 @@
 # Hook events reference — per-event schemas
 
-> Verified against <https://code.claude.com/docs/en/hooks.md> — 2026-07-10
+> Verified against <https://code.claude.com/docs/en/hooks.md> — 2026-09-07
 > Companion file: hooks.md covers the shared hook system contract (locations, matcher rules, handler types, exit codes, JSON output, async, prompt/agent hooks, debugging). This file covers per-event input fields, matcher values, and decision-control output for every hook event.
 
 ## Contents
@@ -28,11 +28,14 @@
 - [TeammateIdle](#teammateidle)
 - [ConfigChange](#configchange)
 - [CwdChanged](#cwdchanged)
+- [DirectoryAdded](#directoryadded)
 - [FileChanged](#filechanged)
 - [WorktreeCreate](#worktreecreate)
 - [WorktreeRemove](#worktreeremove)
 - [PreCompact](#precompact)
 - [PostCompact](#postcompact)
+- [PreModelSwitch](#premodelswitch)
+- [PostModelSwitch](#postmodelswitch)
 - [SessionEnd](#sessionend)
 - [Elicitation](#elicitation)
 - [ElicitationResult](#elicitationresult)
@@ -473,7 +476,11 @@ No timeout or retry limit — session stays on disk until resumed, subject to `c
 
 ## PermissionRequest
 
-Runs when a permission dialog is about to be shown to the user (vs. `PreToolUse`, which runs before tool execution regardless of permission status). Matches on tool name, same values as PreToolUse.
+Runs when Claude Code is about to ask you for permission to use a tool (vs. `PreToolUse`, which runs before every tool call regardless of permission status). Matches on tool name, same values as PreToolUse. Neither event fires for `EndConversation`.
+
+> **Exit code 2 is not honored on this event.** The permission flow proceeds unchanged. Deny through the `decision` object below. This is the single most-misremembered part of the hook contract — see hooks.md § Exit-code contract.
+
+In sessions that can't show a prompt (background subagents in non-interactive mode), Claude Code still runs these hooks; if no hook returns a decision, it **denies** the tool call. Claude Code doesn't run PermissionRequest hooks for a sandboxed command's network request — use the `permission_prompt` notification type for that signal. A `Notification` hook with type `permission_prompt` fires only after the prompt has waited about six seconds.
 
 **Input** — `tool_name`, `tool_input` (like PreToolUse, but no `tool_use_id`), and optional `permission_suggestions` array with the "always allow" options the dialog would show.
 
@@ -789,7 +796,12 @@ Fires when a task is created via `TaskCreate`. No matcher support.
 | `teammate_name` | Name of the teammate creating the task. May be absent |
 | `team_name` | Deprecated. Session-derived; will be removed |
 
-**Decision control:** exit code 2 → task not created, stderr fed back as feedback. JSON `{"continue": false, "stopReason": "..."}` → stops the teammate entirely, matching `Stop` behavior; `stopReason` shown to the user.
+**Decision control:** two ways to block; either way Claude Code deletes the task and returns your message to Claude as the tool's error.
+
+- **Exit code 2**: stderr text is the message.
+- **JSON `{"decision": "block", "reason": "..."}`**: `reason` is the message.
+
+Claude Code **ignores `continue: false`** from this event and Claude keeps working.
 
 ## TaskCompleted
 
@@ -811,7 +823,10 @@ Fires when a task is marked completed — either explicitly via `TaskUpdate`, or
 }
 ```
 
-**Decision control:** exit code 2 → task not marked completed, stderr fed back as feedback. JSON `{"continue": false, "stopReason": "..."}` → stops the teammate entirely, matching `Stop` behavior.
+**Decision control:**
+
+- **Exit code 2**: the task is not marked completed and stderr is fed back to the model as feedback.
+- **JSON `{"continue": false, "stopReason": "..."}`**: when a *teammate finishing its turn* triggered the event, stops the teammate entirely, matching `Stop` behavior; `stopReason` is shown to the user. When the **`TaskUpdate` tool** triggered the event, Claude Code **ignores `continue: false`** — exit code 2 still blocks the completion.
 
 ## Stop
 
@@ -978,6 +993,32 @@ Fires when the working directory changes (e.g. Claude executes `cd`). Pairs with
 
 No decision control — can't block the directory change.
 
+## DirectoryAdded
+
+Fires **after** a working directory is added mid-session via `/add-dir` or an SDK client's `register_repo_root` control request. Use it to prepare a newly added repository, e.g. installing its dependencies.
+
+**Does not fire** when: you pass a directory with the `--add-dir` startup flag (`SessionStart` covers those); you add a directory on the `/permissions` Workspace tab; or the directory is already a working directory or inside one.
+
+Claude Code fires it after refreshing sandbox and permission state, so sandboxed tools already see the new directory when the hook runs. Hook commands themselves run unsandboxed. Claude Code **doesn't wait**: the add completes immediately and the hook runs in the background with the 600-second default timeout.
+
+**Matcher** (`source`):
+
+| Matcher | When it fires |
+| :--- | :--- |
+| `slash_command` | You add a directory with `/add-dir` |
+| `register_repo_root` | An SDK client adds a directory with the `register_repo_root` control request |
+
+**Input** — adds `directory` (absolute path added) and `source` (values above):
+
+```json
+{ "session_id": "abc123", "cwd": "/Users/my-project", "hook_event_name": "DirectoryAdded", "directory": "/Users/my-other-repo", "source": "slash_command" }
+```
+
+No decision control — can't block the add, which already completed. Claude Code discards `continue` and surfaces the rest per source:
+
+- `slash_command`: `systemMessage` is delivered **to Claude** as context on the next conversation turn rather than shown to you. A count of failed hooks appears in the transcript; full failure output goes to the debug log.
+- `register_repo_root`: `systemMessage` and failure output go to the debug log only.
+
 ## FileChanged
 
 Fires when a watched file changes on disk. Useful for reloading env vars when project config files change. Has `$CLAUDE_ENV_FILE` access.
@@ -1075,6 +1116,70 @@ Fires after a compact operation completes. Same matcher values as PreCompact (`m
 
 No decision control — can't affect the compaction result, but can perform follow-up tasks.
 
+## PreModelSwitch
+
+**Requires Claude Code v2.1.251 or later.** Fires before Claude Code applies a model switch that you or a client requested. Can block the switch, require confirmation, or report cost first.
+
+Runs for: `/model <name>` and the `/model` picker; the `Option+P`/`Alt+P` picker; the Model setting in `/config`; turning on fast mode when that changes the session's model; a `set_model` request or a model change in an `apply_flag_settings` request from an Agent SDK host or Remote Control.
+
+**Does not run** for switches Claude Code makes on its own (automatic model fallback, restoring the model on resume) — those reach `PostModelSwitch` only.
+
+**Matcher:** the **canonical name** of the model being switched to, ignoring any `[1m]` suffix. An alias (`opus`), a dated model ID, and a provider-specific ID (e.g. a Bedrock model ID) all match the one canonical name they resolve to, so `claude-opus-5` covers every spelling of Opus 5. Write it as an exact name, a `|`-separated list (`claude-opus-4-6|claude-opus-5`), or a regex (`.*opus.*`). **When Claude Code can't determine a canonical name** — a custom model ID only your LLM gateway knows — it runs **every** PreModelSwitch hook regardless of matcher, so a blocking hook must check `to_model` from its input rather than rely on the matcher alone.
+
+**Input** — in addition to the common fields:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `from_model` | string | Model ID the switch changes from |
+| `to_model` | string | Model ID the switch changes to. The matcher compares against this model's canonical name |
+| `requested_model` | string or `null` | The model the request named: an alias like `opus`, a full model ID, or `null` for the default model |
+| `source` | string | `"command"` for `/model <name>`, the `/config` Model setting, or turning on fast mode; `"picker"` for a model picker; `"sdk"` for `set_model` or an `apply_flag_settings` model change from an Agent SDK host or Remote Control |
+| `context_tokens` | number | Tokens the next request re-sends as its prompt: input + cache read + cache creation + output tokens of the last main-conversation response, combined. `0` before the first response |
+| `prompt_cache_warm` | boolean | Whether the current model's prompt cache is likely still warm, meaning the switch forfeits it |
+| `cache_ttl` | string | Prompt cache lifetime requested for this session: `"5m"` or `"1h"` |
+| `estimated_cache_write_usd` | number | Estimated USD cost of writing `context_tokens` to the prompt cache on `to_model` at the `cache_ttl` rate, excluding the next response. The server may not re-cache the whole context — treat as an estimate |
+| `pricing` | string | How that estimate was priced: `"configured"` (your org's own rates), `"catalog"` (list price), or `"default"` (`to_model` has no known price) |
+
+```json
+{
+  "session_id": "abc123",
+  "cwd": "/Users/...",
+  "hook_event_name": "PreModelSwitch",
+  "from_model": "claude-sonnet-5",
+  "to_model": "claude-opus-5",
+  "requested_model": "opus",
+  "source": "command",
+  "context_tokens": 182340,
+  "prompt_cache_warm": true,
+  "cache_ttl": "5m",
+  "estimated_cache_write_usd": 1.1396,
+  "pricing": "catalog"
+}
+```
+
+**Decision control:** exit code 2 **or** a top-level `decision: "block"` cancels the switch. For finer control, return `hookSpecificOutput.permissionDecision` as on PreToolUse — this event accepts `"allow"`, `"deny"`, `"ask"`, and **not** `"defer"`, `updatedInput`, or `additionalContext`.
+
+| Field | Description |
+| :--- | :--- |
+| `permissionDecision` | `"allow"` proceeds and skips the confirmation Claude Code shows while the prompt cache is warm. `"deny"` cancels the switch. `"ask"` prompts the user to confirm |
+| `permissionDecisionReason` | For `"deny"`, shown to the user as the block reason, or returned as the error for a `set_model` request. For `"ask"`, shown in the confirmation prompt. Ignored for `"allow"` |
+
+Only `/model` in an **interactive** session can show the `"ask"` prompt. On every other surface — `-p` mode, `/config`, `set_model` requests — Claude Code treats `"ask"` as a refusal. When multiple hooks return different decisions, precedence is `deny` > `ask` > `allow`. `systemMessage` is shown to the user regardless of the decision, so a cost-report hook can return `{"systemMessage": "..."}` and exit 0.
+
+**Timeout:** default 30 seconds; a hook that doesn't respond before its timeout **blocks** the switch (unlike `PreToolUse`, where a timed-out command hook lets the call continue). Runs `command`, `http`, and `mcp_tool` hooks only. A hook exiting with a code other than 0 or 2 and printing no JSON decision doesn't block — stderr is shown and the switch applies.
+
+## PostModelSwitch
+
+**Requires Claude Code v2.1.251 or later.** Fires after the session's model changes. Can't block. Use it to give Claude model-specific guidance without editing every CLAUDE.md.
+
+Runs after: a switch you or a client requested; an automatic model fallback that changes the session's model; a setting such as `opusplan` entering or leaving plan mode; Claude Code restoring the model on resume. **Does not run** when a model from a fallback model chain serves a single turn, since that substitution leaves the session's model unchanged.
+
+**Matcher:** same rules as `PreModelSwitch` — the canonical name of the model switched to.
+
+**Input** — the same fields as PreModelSwitch, with `hook_event_name` set to `"PostModelSwitch"` and two extra `source` values: `"auto"` (automatic fallback or another change Claude Code made on its own) and `"resume"` (the model restored on resume). `requested_model` is `null` when `source` is `"auto"`; when `source` is `"resume"` it is the saved model setting that was restored.
+
+**Decision control:** context only. Plain-text stdout on exit 0, or `additionalContext` from JSON output, is delivered to Claude with the **next request after the switch**. If the hook hasn't finished within **five seconds** after you send the next prompt, Claude Code sends that request without the output and attaches it to the following request instead. If the model changes several times before the next request, only the output for the **last** switch's target model is delivered.
+
 ## SessionEnd
 
 Fires when a session terminates. Useful for cleanup, logging session stats, saving state.
@@ -1087,8 +1192,8 @@ Fires when a session terminates. Useful for cleanup, logging session stats, savi
 | `resume` | Session switched via interactive `/resume` |
 | `logout` | User logged out |
 | `prompt_input_exit` | User exited while prompt input was visible |
-| `bypass_permissions_disabled` | Bypass permissions mode was disabled |
 | `other` | Other exit reasons |
+| `bypass_permissions_disabled` | **Removed in v2.1.234**; Claude Code doesn't send it. Drop it from `SessionEnd` matchers |
 
 **Input** — adds `reason` (values above):
 
@@ -1096,7 +1201,7 @@ Fires when a session terminates. Useful for cleanup, logging session stats, savi
 { "session_id": "abc123", "cwd": "/Users/...", "hook_event_name": "SessionEnd", "reason": "other" }
 ```
 
-No decision control — can't block termination, but can perform cleanup.
+No decision control — can't block termination, but can perform cleanup. Claude Code discards their JSON output fields, including `systemMessage`.
 
 **Timeout/budget rules:** default timeout is **1.5 seconds**, applying to session exit, `/clear`, and switching sessions via interactive `/resume`. Set a per-hook `timeout` for more time. The overall budget auto-raises to the highest per-hook timeout configured in settings files, **up to 60 seconds** — timeouts on plugin-provided hooks don't raise the budget. Override the budget explicitly with `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` (milliseconds):
 

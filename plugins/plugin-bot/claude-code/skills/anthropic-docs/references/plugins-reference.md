@@ -1,6 +1,6 @@
 # Plugins reference
 
-> Verified against <https://code.claude.com/docs/en/plugins-reference.md> — 2026-07-10
+> Verified against <https://code.claude.com/docs/en/plugins-reference> — 2026-09-07
 
 ## Contents
 
@@ -25,7 +25,7 @@
 
 ## Component reference
 
-A **plugin** is a self-contained directory of components that extends Claude Code with custom functionality. Components: skills, agents, hooks, MCP servers, LSP servers, monitors, themes.
+A **plugin** is a self-contained directory of components that extends Claude Code with custom functionality. Components: skills, agents, workflows, hooks, MCP servers, LSP servers, monitors, themes, output styles.
 
 ### Skills
 
@@ -96,7 +96,7 @@ Integration: agents appear in @-mention typeahead under scoped name (`my-plugin:
 | `UserPromptSubmit` | Prompt submitted, before Claude processes it |
 | `UserPromptExpansion` | A user-typed command expands into a prompt, before it reaches Claude. Can block the expansion |
 | `PreToolUse` | Before a tool call executes. Can block it |
-| `PermissionRequest` | When a permission dialog appears |
+| `PermissionRequest` | When a tool call needs a permission decision. **Exit 2 is not honored here** — deny via the `decision` object |
 | `PermissionDenied` | Tool call denied by the auto mode classifier. Return `{retry: true}` to let the model retry |
 | `PostToolUse` | After a tool call succeeds |
 | `PostToolUseFailure` | After a tool call fails |
@@ -113,11 +113,14 @@ Integration: agents appear in @-mention typeahead under scoped name (`my-plugin:
 | `InstructionsLoaded` | CLAUDE.md or `.claude/rules/*.md` loaded into context. Fires at session start and on lazy load during session |
 | `ConfigChange` | Config file changes during a session |
 | `CwdChanged` | Working directory changes (e.g. `cd`). Useful for reactive env management (direnv) |
+| `DirectoryAdded` | A working directory is added mid-session via `/add-dir` or the SDK `register_repo_root` control request |
 | `FileChanged` | A watched file changes on disk. `matcher` field specifies which filenames to watch |
-| `WorktreeCreate` | Worktree being created via `--worktree` or `isolation: "worktree"`. Replaces default git behavior |
+| `WorktreeCreate` | Worktree being created via `--worktree`, `isolation: "worktree"`, or for a background session. Replaces default git behavior. **Any non-zero exit aborts creation** |
 | `WorktreeRemove` | Worktree being removed, at session exit or subagent finish |
 | `PreCompact` | Before context compaction |
 | `PostCompact` | After context compaction completes |
+| `PreModelSwitch` | Before Claude Code applies a requested model switch. Can block it. Requires v2.1.251+ |
+| `PostModelSwitch` | After the session's model changes, including changes Claude Code makes on its own. Requires v2.1.251+ |
 | `Elicitation` | MCP server requests user input during a tool call |
 | `ElicitationResult` | After user responds to an MCP elicitation, before response sent back to server |
 | `SessionEnd` | Session terminates |
@@ -324,6 +327,7 @@ Personal-scope plugins have none of these restrictions.
   "skills": "./custom/skills/",
   "commands": ["./custom/commands/special.md"],
   "agents": ["./custom/agents/reviewer.md"],
+  "workflows": "./custom/workflows/",
   "hooks": "./config/hooks.json",
   "mcpServers": "./mcp-config.json",
   "outputStyles": "./styles/",
@@ -394,6 +398,7 @@ The same field can appear in a plugin's marketplace entry, where it takes preced
 | `skills` | string\|array | Custom skill directories containing `<name>/SKILL.md`. Adds to the default `skills/` scan (see marketplace-root exception under Path behavior rules) | `"./custom/skills/"` |
 | `commands` | string\|array | Custom flat `.md` skill files or directories (replaces default `commands/`) | `"./custom/cmd.md"` or `["./cmd1.md"]` |
 | `agents` | string\|array | Custom agent files (replaces default `agents/`) | `"./custom/agents/reviewer.md"` |
+| `workflows` | string\|array | Custom workflow script files or directories (replaces default `workflows/`) | `"./custom/workflows/"` |
 | `hooks` | string\|array\|object | Hook config paths or inline config | `"./my-extra-hooks.json"` |
 | `mcpServers` | string\|array\|object | MCP config paths or inline config | `"./my-extra-mcp-config.json"` |
 | `outputStyles` | string\|array | Custom output style files/directories (replaces default `output-styles/`) | `"./styles/"` |
@@ -480,7 +485,7 @@ Keys must be valid identifiers. Each option:
 
 Whether a custom path **replaces** or **adds to** the plugin's default directory depends on the field:
 
-- **Replaces the default**: `commands`, `agents`, `outputStyles`, `experimental.themes`, `experimental.monitors`. E.g. when the manifest specifies `commands`, the default `commands/` directory is not scanned. To keep the default and add more, list it explicitly: `"commands": ["./commands/", "./extras/"]`.
+- **Replaces the default**: `commands`, `agents`, `workflows`, `outputStyles`, `experimental.themes`, `experimental.monitors`. E.g. when the manifest specifies `commands`, the default `commands/` directory is not scanned. To keep the default and add more, list it explicitly: `"commands": ["./commands/", "./extras/"]`.
 - **Adds to the default**: `skills`. The default `skills/` directory is always scanned, and directories listed in `skills` load alongside it. **Exception**: for a marketplace entry whose `source` resolves to the marketplace root, declaring specific subdirectories replaces the default `skills/` scan.
 - **Own merge rules**: hooks, MCP servers, LSP servers — see each component section above for how multiple sources combine.
 
@@ -488,7 +493,7 @@ When a plugin has both a default folder and the matching manifest key, Claude Co
 
 **For all path fields**:
 
-- All paths must be relative to the plugin root and **start with `./`**.
+- All paths must be relative to the plugin root and **start with `./`** — except the `skills` field, which also accepts `"."`. Both `"."` and `"./"` denote the plugin root itself. Before v2.1.221, `"."` failed manifest validation and the plugin didn't load, so use `"./"` to support earlier versions.
 - Components from custom paths use the same naming/namespacing rules.
 - Multiple paths can be specified as arrays.
 - **Invocation-name rule** (authoritative): when a skill path points to a directory containing `SKILL.md` directly (e.g. `"skills": ["./"]` pointing to plugin root, or the auto-loaded single-skill case below), the frontmatter `name` field in `SKILL.md` determines the invocation name — stable regardless of install directory. If `name` is unset, the directory basename is the fallback (for a marketplace-installed plugin, that basename is a cache version string that changes on every update).
@@ -602,6 +607,8 @@ enterprise-plugin/
 │   ├── security-reviewer.md
 │   ├── performance-tester.md
 │   └── compliance-checker.md
+├── workflows/                # Workflow script files
+│   └── review-changes.js
 ├── output-styles/            # Output style definitions
 │   └── terse.md
 ├── themes/                   # Color theme definitions
@@ -636,13 +643,14 @@ A `CLAUDE.md` at the plugin root is **not** loaded as project context. Plugins c
 | Skills | `skills/` | Skills with `<name>/SKILL.md` structure |
 | Commands | `commands/` | Skills as flat Markdown files. Use `skills/` for new plugins |
 | Agents | `agents/` | Subagent Markdown files |
+| Workflows | `workflows/` | Workflow script files |
 | Output styles | `output-styles/` | Output style definitions |
 | Themes | `themes/` | Color theme definitions |
 | Hooks | `hooks/hooks.json` | Hook configuration |
 | MCP servers | `.mcp.json` | MCP server definitions |
 | LSP servers | `.lsp.json` | Language server configurations |
 | Monitors | `monitors/monitors.json` | Background monitor configurations |
-| Executables | `bin/` | Executables added to the Bash tool's `PATH`. Invokable as bare commands in any Bash tool call while the plugin is enabled |
+| Executables | `bin/` | Executables added to the Bash tool's `PATH`. Invokable as bare commands in any Bash tool call while the plugin is enabled. Can't be included in a plugin distributed through claude.ai organization settings |
 | Settings | `settings.json` | Default configuration applied when the plugin is enabled. Only `agent` and `subagentStatusLine` keys currently supported |
 
 ## CLI commands reference
