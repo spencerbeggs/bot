@@ -43,7 +43,7 @@ Apply this to the file you just opened, top to bottom. The two mistakes that bre
 
 Everything above is the whole contract on a host that implements nothing else. Each host layers its own fields on top:
 
-- **Claude Code** adds `user-invocable`, `paths`, `disable-model-invocation`, and frontmatter `hooks` — with `once: true` honored only in skill frontmatter, not agent frontmatter or settings files. Full field table: `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/skills.md`; the `once: true` scoping is in `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/hooks.md`. Since v2.1.218, boolean frontmatter fields such as `disable-model-invocation` also accept `yes`/`no`/`on`/`off`/`1`/`0` in any letter case, in addition to `true`/`false` — see `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/plugins-reference.md` § Skills.
+- **Claude Code** adds a substantial set of non-floor fields — see `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/skills.md` § Frontmatter reference for the full roster; do not treat any field absent from the spec floor above as portable. Two worth naming because a specific rule below depends on them: frontmatter `hooks`, whose `once: true` is honored only in skill frontmatter, not agent frontmatter or settings files (`${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/hooks.md`); and boolean fields such as `disable-model-invocation`, which since v2.1.218 also accept `yes`/`no`/`on`/`off`/`1`/`0` in any letter case, in addition to `true`/`false` (`${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/plugins-reference.md` § Skills).
 - **Copilot's own reference documents no `SKILL.md` frontmatter fields beyond the spec floor** — `copilot-docs` covers where skill directories live (five locations, project and personal) and load precedence, never a frontmatter schema. Treat this as an absence of a documented extension, not confirmation that Copilot rejects extra fields.
 
 **The payoff:** a skill written using only the floor fields runs on every host that claims Agent Skills support, VS Code included, with no port required. Reaching for a host addition is a deliberate portability trade, not a default.
@@ -77,9 +77,9 @@ Tier 3 only works if two rules hold:
 ## Self-audit (run before finishing)
 
 ```bash
-# description length (must be < 1024)
-awk -F': ' '/^description:/{print substr($0, length($1)+3); exit}' SKILL.md | wc -c
-# body length (must be < 500)
+# description length in characters, not bytes (must be < 1024)
+awk -F': ' '/^description:/{print substr($0, length($1)+3); exit}' SKILL.md | wc -m
+# body length in lines (must be < 500)
 awk 'c==2{print} /^---$/{c++}' SKILL.md | wc -l
 # name matches directory
 diff <(awk -F': ' '/^name:/{print $2; exit}' SKILL.md) <(basename "$(dirname SKILL.md)")
@@ -107,7 +107,7 @@ A context skill that also declares `paths:` is doing double duty — fine, but b
 - A gotcha filed under `references/` instead of `SKILL.md` — the agent has no reason to go looking for it.
 - Missing `argument-hint` on a user-invokable workflow skill that takes arguments.
 - `user-invocable: false` skill that still declares `argument-hint` — dead field, users can't invoke it.
-- Assuming a Claude Code-only field (`hooks`, `paths`, `disable-model-invocation`) ports to Copilot — it silently does nothing there.
+- Assuming a Claude Code-only field (`hooks`, `paths`, `disable-model-invocation`) ports to Copilot — its behavior there is undocumented; do not rely on it either way.
 
 ## Read for the full contract
 
