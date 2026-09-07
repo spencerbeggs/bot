@@ -3,6 +3,7 @@
 > Verified against <https://code.visualstudio.com/docs/agent-customization/agent-plugins> — 2026-09-07
 > Verified against <https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference> — 2026-09-07
 > Verified against <https://agentskills.io/client-implementation/adding-skills-support.md> — 2026-09-07
+> Claude Code column: not stamped here — see the sibling `anthropic-docs` skill, `references/plugins-reference.md`
 
 Where the hosts actually differ once a plugin leaves the portable layer: which manifest a host looks for, which placeholder spellings it answers to, and where it hunts for skills.
 
@@ -38,18 +39,22 @@ Agent Plugins itself defines **no** search order — the spec requires the manif
 
 | Placeholder | Claude Code | Copilot | Agent Plugins 1.0 |
 | :-- | :-- | :-- | :-- |
-| `${CLAUDE_PLUGIN_ROOT}` | Defined | Accepted per the VS Code page; undocumented in the CLI reference | Not defined |
+| `${CLAUDE_PLUGIN_ROOT}` | Defined | Accepted per the VS Code page; **absent from the CLI reference's substitution table** | Not defined |
 | `${PLUGIN_ROOT}` | Not defined | Defined | Defined (`args`, `env` values, `cwd` in `mcp.json`) |
-| `${CLAUDE_PLUGIN_DATA}` | Defined | Defined, as an alias of `${PLUGIN_DATA}` | Not defined |
-| `${PLUGIN_DATA}` | Not defined | Defined | Defined (same expansion sites) |
+| `${CLAUDE_PLUGIN_DATA}` | Defined | Defined, as an alias of `${COPILOT_PLUGIN_DATA}` | Not defined |
+| `${COPILOT_PLUGIN_DATA}` | Not defined | Defined | Not defined |
+| `${PLUGIN_DATA}` | Not defined | **Not defined** | Defined (same expansion sites) |
 | `${COPILOT_PLUGIN_ROOT}` | Not defined | Not defined | Not defined |
 
-**Copilot is the overlap.** It is the only host that answers to both vocabularies, which is why a Copilot-targeted file can use either spelling and a portable file cannot. **No spelling is universal** — there is no token that resolves on Claude Code, Copilot and a bare Agent Plugins client alike, so a script that needs its plugin root on more than one host resolves a chain rather than trusting one variable. And **`${COPILOT_PLUGIN_ROOT}` is defined by nothing**: it appears in no specification and no host's documentation. If you see it in a file, it is a bug, not a dialect.
+The Copilot CLI reference's substitution table has exactly three rows: `${PLUGIN_ROOT}`, `${COPILOT_PLUGIN_DATA}`, and `${CLAUDE_PLUGIN_DATA}` as an alias of the second. Anything else in the Copilot column above is an inference from another page, marked as such.
 
-Two further cautions:
+**Copilot is the overlap.** It is the only host that answers to spellings from both vocabularies — `${PLUGIN_ROOT}` from Agent Plugins and `${CLAUDE_PLUGIN_DATA}` from Claude Code — which is why a Copilot-targeted file has a choice a portable file does not. **No spelling is universal**: no token resolves on Claude Code, Copilot and a bare Agent Plugins client alike, so a script that needs its plugin root on more than one host resolves a chain rather than trusting one variable. And **`${COPILOT_PLUGIN_ROOT}` is defined by nothing** — it appears in no specification and no host's documentation. If you see it in a file, it is a bug, not a dialect. Note that this does *not* generalize to the `COPILOT_*` prefix: `${COPILOT_PLUGIN_DATA}` is real and documented.
 
-- The root spelling is the contested one. `${CLAUDE_PLUGIN_DATA}` is safe on both Claude Code and Copilot because Copilot aliases it explicitly; `${CLAUDE_PLUGIN_ROOT}` rests on the VS Code page alone, and the Copilot CLI reference documents only `${PLUGIN_ROOT}`. Prefer `${PLUGIN_ROOT}` when targeting Copilot CLI.
-- Under Agent Plugins these are `mcp.json` expansions, not general environment variables: they expand in `args`, `env` values and `cwd`, and never in `command`, `env` keys, component locations, `url` or `headers`. `PLUGIN_ROOT` and `PLUGIN_DATA` are additionally set in the launched subprocess's environment, which is what a bundled script can read.
+Three further cautions:
+
+- **`${PLUGIN_DATA}` is Agent-Plugins-only.** It is not in Copilot's substitution table; VS Code attributes it to Agent Plugins 1.0. Writing it in a Copilot-targeted file yields a literal, unexpanded `${PLUGIN_DATA}` string. For Copilot, write `${COPILOT_PLUGIN_DATA}` or its `${CLAUDE_PLUGIN_DATA}` alias.
+- **The root spelling is the contested one.** `${CLAUDE_PLUGIN_ROOT}` rests on the VS Code page alone and does not appear in the Copilot CLI reference's table. Prefer `${PLUGIN_ROOT}` when targeting Copilot CLI.
+- **Under Agent Plugins these are `mcp.json` expansions, not general environment variables.** They expand in `args`, `env` values and `cwd`, and never in `command`, `env` keys, component locations, `url` or `headers`. `PLUGIN_ROOT` and `PLUGIN_DATA` are additionally set in the launched subprocess's environment, which is what a bundled script can read.
 
 ## Where each host looks for skills
 
@@ -58,13 +63,14 @@ Two further cautions:
 | Agent Plugins 1.0 (in-plugin) | `skills/`, immediate subdirectories only |
 | Claude Code (in-plugin) | `skills/` |
 | VS Code / Copilot (in-plugin) | `skills/` |
-| Copilot CLI (project) | `<project>/.github/skills/`, `<project>/.claude/skills/`, then the same names in parent directories for monorepo inheritance |
-| Copilot CLI (user) | `~/.copilot/skills/`, `~/.agents/skills/` |
-| Copilot CLI (other) | Each plugin's configured skills paths; then `COPILOT_SKILLS_DIRS` and config settings |
+| Copilot CLI (project) | `<project>/.github/skills/`, then `<project>/.agents/skills/`, then `<project>/.claude/skills/` |
+| Copilot CLI (parents) | The same three names in parent directories, for monorepo inheritance |
+| Copilot CLI (user) | `~/.copilot/skills/`, then `~/.agents/skills/` |
+| Copilot CLI (other) | Each plugin's own `skills/`, by installation order; then `COPILOT_SKILLS_DIRS` and config settings |
 
-Copilot CLI resolves these **first-found-wins**, in the order listed: project, then parents, then user, then plugins, then environment-configured.
+Copilot CLI resolves these **first-found-wins**, in exactly the order listed: project, then parents, then user, then plugins, then environment-configured.
 
-`.agents/skills/` is the **cross-client convention**. The Agent Skills specification deliberately does not mandate where skill directories live — it defines only what goes inside them — but the client-implementation guide recommends every client scan both its own native directory and `.agents/skills/`, at both project and user scope, so that skills installed by one compliant client are visible to the others. Several implementations also scan `.claude/skills/` for pragmatic compatibility, since many existing skills already live there.
+`.agents/skills/` is **a first-class location on Copilot, not merely a convention**. The Copilot CLI reference lists it at both project and user scope, ranked above `.claude/skills/` at project scope. Separately, the Agent Skills client-implementation guide recommends it as the cross-client interoperability path: the specification deliberately does not mandate where skill directories live — only what goes inside them — so scanning both a native directory and `.agents/skills/` is what makes skills installed by one compliant client visible to another. Several implementations also scan `.claude/skills/` for pragmatic compatibility, since many existing skills already live there. Treat `.agents/skills/` as the location to install to when you do not know which host will read the skill.
 
 Client guidance worth knowing when reasoning about why a skill did or did not load:
 
