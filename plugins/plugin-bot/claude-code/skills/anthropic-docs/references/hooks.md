@@ -188,7 +188,7 @@ Apply to all hook types:
 | :--- | :--- | :--- |
 | `type` | yes | `"command"`, `"http"`, `"mcp_tool"`, `"prompt"`, or `"agent"` |
 | `if` | no | Permission rule syntax filtering when this hook runs, e.g. `"Bash(git *)"` or `"Edit(*.ts)"`. Only evaluated on tool events: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied`. On other events, a hook with `if` set never runs |
-| `timeout` | no | Seconds before canceling — see [Timeouts](#timeouts) |
+| `timeout` | no | Seconds before canceling. Not enforced on an `async` command hook. Defaults and per-event overrides — including the `SessionEnd` budget, which a plugin hook's `timeout` cannot raise — are in [Timeouts](#timeouts) |
 | `statusMessage` | no | Custom spinner message while the hook runs |
 | `once` | no | If `true`, removed after its **first successful run**. A run that fails, blocks with exit code 2, or times out leaves the hook in place, so it runs again on the next matching event. Only honored for hooks declared in skill frontmatter; ignored in settings files and agent frontmatter |
 
@@ -348,7 +348,7 @@ The exit code doesn't act alone. **Claude Code reads JSON output fields from std
 3. **`WorktreeCreate` aborts on ANY non-zero exit**, no matter what the JSON says.
 4. **On standard-decision-model events, a non-zero exit other than 2 carrying valid JSON has its JSON honored and its exit code ignored.** Each field the event supports is honored — `permissionDecision`, `additionalContext`, `updatedInput`, `systemMessage` — and the hook isn't reported as an error.
 
-> Exit code 1 is treated as a non-blocking error and the action proceeds, even though 1 is the conventional Unix failure code. Use `exit 2` to enforce a policy. Exception: `WorktreeCreate`, where any non-zero exit code aborts worktree creation.
+> **Without valid JSON on stdout**, Claude Code treats exit code 1 as a non-blocking error and the action proceeds, even though 1 is the conventional Unix failure code. (With valid JSON, rule 4 applies and the JSON decides.) Use `exit 2` to enforce a policy through the exit code alone. Exception: `WorktreeCreate`, where any non-zero exit code aborts worktree creation.
 
 **Exit 0**: success, and the intended code when printing JSON for structured control. For most events stdout goes to the debug log, not the transcript; the exceptions — `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart`, `PostModelSwitch` — add plain-text stdout as context Claude can see and act on. Stderr from a hook that exits 0 goes to the debug log only; Claude never sees it. To surface a warning to Claude from `PostToolUse`/`PostToolUseFailure`, exit 2 instead.
 
@@ -412,7 +412,13 @@ For `SessionStart`, `SubagentStart`, and `PostModelSwitch`, exit-2 stderr render
 | `prompt` | 30 s |
 | `agent` | 60 s |
 
-Per-event overrides of the `command`/`http`/`mcp_tool` default: **30 s** on `UserPromptSubmit`, `PreModelSwitch`, `PostModelSwitch`; **10 s** on `MessageDisplay`. `SessionEnd` hooks share a **1.5-second budget**; if your settings set a longer per-hook `timeout`, Claude Code raises the budget to match, up to 60 seconds.
+Per-event overrides of the `command`/`http`/`mcp_tool` default: **30 s** on `UserPromptSubmit`, `PreModelSwitch`, `PostModelSwitch`; **10 s** on `MessageDisplay`. `SessionEnd` hooks share a **1.5-second budget**, applying to session exit, `/clear`, and switching sessions via interactive `/resume`.
+
+> **Plugin authors: the budget-raise does not apply to you.** The shared `SessionEnd` budget is raised to the highest per-hook `timeout` **configured in settings files**, up to 60 seconds — but **a `timeout` set on a plugin-provided hook does not raise the budget.** A plugin `SessionEnd` hook that sets `"timeout": 10` still gets **1.5 seconds**, and the failure mode is **silent**: as with any timeout, Claude Code cancels the hook and **discards its output**, so it renders no decision and reports no blocking error — the work simply does not finish. (The live doc does not say whether the debug log names the budget as the cause; assume it does not help you.) Design plugin `SessionEnd` work to finish inside 1.5 s, or hand it to a detached process. The only way to raise the budget for a plugin hook is the user's environment: `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` (milliseconds), which a plugin cannot set on its own behalf.
+
+```bash
+CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS=5000 claude
+```
 
 Apart from a command hook run with `async: true`, Claude Code cancels a `command`, `http`, or `mcp_tool` hook that reaches its `timeout` and **discards its output**, so on most events a timed-out hook renders no decision. Two exceptions:
 
