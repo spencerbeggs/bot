@@ -66,6 +66,8 @@ Detailed system prompt for the agent describing its role, expertise, and behavio
 
 **Not supported for plugin-shipped agents (security)**: `hooks`, `mcpServers`, `permissionMode` — these fields are ignored/rejected if present.
 
+**Frontmatter that doesn't parse**: Claude Code loads a plugin agent even when its frontmatter has no `name` or doesn't parse — it names the agent after the file, uses `Agent from my-plugin plugin` as its description, and ignores every field in the file. This is scope-specific: for **project, user and managed agents, invalid frontmatter causes the file to be skipped entirely** instead. Both failure modes are silent, with opposite symptoms — a plugin agent degrades in place and keeps running under a useless description, while a project/user/managed agent simply vanishes from the list.
+
 Integration: agents appear in @-mention typeahead under scoped name (`my-plugin:code-reviewer`) once enabled; Claude can invoke automatically or be invoked manually; work alongside built-in agents.
 
 ### Hooks
