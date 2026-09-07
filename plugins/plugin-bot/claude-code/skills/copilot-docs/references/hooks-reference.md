@@ -64,11 +64,13 @@ Specify exactly one of `bash`, `powershell`, `command`, or `exec`.
 
 | Field | Notes |
 | :-- | :-- |
-| `url` | Required. Must be `https://`, except `http://localhost`, `http://127.*` and `http://[::1]` when `COPILOT_HOOK_ALLOW_LOCALHOST=1` is set. |
+| `url` | Required. Must be `https://`, except `http://localhost`, `http://127.*` and `http://[::1]` when `COPILOT_HOOK_ALLOW_LOCALHOST=1` is set. **On `preToolUse` and `permissionRequest` the `https://` requirement is unconditional** — see below. |
 | `headers` | Request headers; environment variables expand into values. |
 | `allowedEnvVars` | Restricts which environment variables may expand in `headers`. **Setting it forces the `https://` requirement**, localhost exemption included. |
 | `timeoutSec` | Default 30. |
 | `matcher` | Matches `toolName`. |
+
+**Two events opt out of the localhost exemption entirely.** For `preToolUse` and `permissionRequest`, the URL *"must use `https://` because the response can grant tool permissions"* — an additional, unconditional requirement layered on the general default above, not a restatement of it. `COPILOT_HOOK_ALLOW_LOCALHOST=1` does not relax it, so a loopback endpoint that works for a `postToolUse` logger is rejected on those two events. `allowedEnvVars` forces `https://` on every event, loopback included, by a separate route.
 
 ### `prompt`
 

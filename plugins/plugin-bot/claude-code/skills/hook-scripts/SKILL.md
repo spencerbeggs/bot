@@ -112,7 +112,7 @@ Every cell in the Copilot column is an edit to make, not a fact to note. Rosters
 | `prompt` handlers | Fire on the matched event | Fire **only on a new interactive session** — not on resume, not in pipe mode (`-p`), CLI only. If the behavior must be reliable, rewrite it as a `command` handler |
 | Output | nested `hookSpecificOutput.*`, `updatedInput` | Flatten it: `permissionDecision` / `modifiedArgs` (`preToolUse`), `modifiedResult` (`postToolUse`), `behavior` (`permissionRequest`). Field-by-field roster in `hooks-reference.md` § Output schemas |
 | Timeout key | `timeout` | Rename to `timeoutSec` (default 30; a `timeout` alias is accepted only when `timeoutSec` is absent) |
-| `http` URLs | Governed by the `allowedHttpHookUrls` allowlist | Ensure the URL is `https://`. `http://localhost`, `http://127.*` and `http://[::1]` are exempt **only** with `COPILOT_HOOK_ALLOW_LOCALHOST=1`, and setting `allowedEnvVars` forces `https://` regardless, localhost included |
+| `http` URLs | Governed by the `allowedHttpHookUrls` allowlist | Ensure the URL is `https://`. `http://localhost`, `http://127.*` and `http://[::1]` are exempt **only** with `COPILOT_HOOK_ALLOW_LOCALHOST=1`; setting `allowedEnvVars` forces `https://` regardless, localhost included; and on `preToolUse` and `permissionRequest` the requirement is **unconditional** — the loopback exemption does not reach those two, because the response can grant tool permissions (`hooks-reference.md` § `http`) |
 
 ### Hook sources accumulate on both hosts — nothing is shadowed
 
@@ -165,6 +165,7 @@ Under `context: fork`, Claude Code **reuses the parent's `session_id`** — a `S
 - Carrying rule 4 without "on standard-decision-model events only" — which silently re-breaks `PermissionRequest`, `WorktreeCreate` and `StopFailure`.
 - `exit 1` in a Copilot `preToolUse` hook expecting it to be logged and ignored — that event is fail-closed.
 - Assuming a repository-scope Copilot hook shadows the plugin's. Both run.
+- Pointing a Copilot `preToolUse` or `permissionRequest` `http` handler at a loopback URL. `COPILOT_HOOK_ALLOW_LOCALHOST=1` does not reach those two events; the endpoint that serves your `postToolUse` logger in development is rejected there.
 - Writing `${COPILOT_PLUGIN_ROOT}` — defined by nothing, expands to nothing, and the hook fails silently rather than erroring. This does **not** generalize to the `COPILOT_*` prefix: `${COPILOT_PLUGIN_DATA}` is real and documented.
 - Trusting a bare `${CLAUDE_PLUGIN_ROOT}` or a bare `${PLUGIN_ROOT}` in a script meant to run on more than one host — resolve the chain.
 - Rewriting script bodies during a Claude → Copilot port. Rewrite the registration; the bodies port as-is once they resolve the chain.
