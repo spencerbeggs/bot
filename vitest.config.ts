@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 export default async () => {
 	const { projects, tags } = await AgentPlugin.discover().addProject({
 		name: "plugin-bot",
-		path: "./plugins/plugin-bot",
+		path: "./plugins/plugin-bot/claude-code",
 	});
 
 	return defineConfig({

@@ -27,7 +27,7 @@
 		"build:prod": "node savvy.build.ts --target prod",
 		"ci:build": "CI=\"true\" turbo run build:dev build:prod --log-order=grouped --output-logs=full --log-prefix=none",
 		"ci:test": "CI=\"true\" vitest run --passWithNoTests",
-		"claude": "claude --plugin-dir ./plugins/plugin-bot --plugin-dir ./plugins/dogfood",
+		"claude": "claude --plugin-dir ./plugins/plugin-bot/claude-code --plugin-dir ./plugins/dogfood/claude-code",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
