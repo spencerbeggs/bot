@@ -64,7 +64,7 @@ Detailed system prompt for the agent describing its role, expertise, and behavio
 
 **Supported frontmatter**: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `isolation` (only valid value: `"worktree"`).
 
-**Not supported for plugin-shipped agents (security)**: `hooks`, `mcpServers`, `permissionMode` — these fields are ignored/rejected if present.
+**Not supported for plugin-shipped agents (security)**: `hooks`, `mcpServers`, `permissionMode` — the agent still loads, but these fields are ignored and dropped at load time if present, not rejected. See `subagents.md` § Plugin subagent restriction for the workarounds (copying the agent into `.claude/agents/`, or `permissions.allow` in settings — both apply session-wide, not just to the plugin subagent).
 
 **Missing `name`, frontmatter otherwise valid**: Claude Code names the agent after the file, so `agents/reviewer.md` in a plugin named `my-plugin` loads as `my-plugin:reviewer`. Every other field — `tools`, `model`, `skills`, etc. — still applies.
 
