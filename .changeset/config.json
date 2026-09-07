@@ -5,6 +5,16 @@
 	"changelog": [
 		"@savvy-web/changelog",
 		{
+			"packages": {
+				"@plugin-bot/claude-code-plugin": {
+					"versionFiles": [
+						{
+							"glob": "plugins/plugin-bot/claude-code/.claude-plugin/plugin.json",
+							"paths": ["$.version"]
+						}
+					]
+				}
+			},
 			"repo": "spencerbeggs/bot"
 		}
 	],

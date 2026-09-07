@@ -72,6 +72,8 @@ importers:
         version: 7.0.2
     publishDirectory: dist/dev/pkg
 
+  plugins/plugin-bot/claude-code: {}
+
 packages:
 
   '@alcalzone/ansi-tokenize@0.3.0':

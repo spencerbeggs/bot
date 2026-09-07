@@ -72,3 +72,62 @@ target_workspaces() {
 		esac
 	done < <(target_workspaces)
 }
+
+@test "tracking packages are named @<plugin>/<target>-plugin, private, unpublishable" {
+	found=0
+	while IFS= read -r ws; do
+		pkg="${ws}/package.json"
+		# A workspace with no package.json is undistributed by design (dogfood).
+		[ -f "$pkg" ] || continue
+		found=$((found + 1))
+		plugin="$(basename "$(dirname "$ws")")"
+		target="$(basename "$ws")"
+		expected="@${plugin}/${target}-plugin"
+		actual="$(jq -r '.name' "$pkg")"
+		[ "$actual" = "$expected" ] || {
+			echo "${pkg}: name is '${actual}', expected '${expected}'"
+			return 1
+		}
+		[ "$(jq -r '.private' "$pkg")" = "true" ] || {
+			echo "${pkg}: must be private"
+			return 1
+		}
+		[ "$(jq -r 'has("publishConfig")' "$pkg")" = "false" ] || {
+			echo "${pkg}: must not carry publishConfig"
+			return 1
+		}
+	done < <(target_workspaces)
+	# Without this guard the test passes vacuously when no tracking package
+	# exists yet, which is exactly the state it is written to reject.
+	[ "$found" -gt 0 ] || {
+		echo "no tracking packages found"
+		return 1
+	}
+}
+
+@test "every tracking package has a versionFiles entry whose glob resolves" {
+	cfg="${REPO_ROOT}/.changeset/config.json"
+	found=0
+	while IFS= read -r ws; do
+		pkg="${ws}/package.json"
+		[ -f "$pkg" ] || continue
+		found=$((found + 1))
+		name="$(jq -r '.name' "$pkg")"
+		globs="$(jq -r --arg n "$name" \
+			'.changelog[1].packages[$n].versionFiles[]?.glob // empty' "$cfg")"
+		[ -n "$globs" ] || {
+			echo "no versionFiles entry for ${name} in .changeset/config.json"
+			return 1
+		}
+		while IFS= read -r g; do
+			[ -f "${REPO_ROOT}/${g}" ] || {
+				echo "versionFiles glob does not resolve: ${g}"
+				return 1
+			}
+		done <<< "$globs"
+	done < <(target_workspaces)
+	[ "$found" -gt 0 ] || {
+		echo "no tracking packages found"
+		return 1
+	}
+}
