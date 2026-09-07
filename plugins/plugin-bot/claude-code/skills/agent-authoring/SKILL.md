@@ -64,11 +64,11 @@ The table below is what a port must account for; a Copilot agent produced withou
 
 | Claude Code | Copilot | Consequence |
 | :-- | :-- | :-- |
-| `skills:` preload list | No documented equivalent | The ported agent must **name its skills in prose** and instruct itself to read them. This is a capability loss, not a formatting difference — Claude injects full skill content at startup; a Copilot agent can only be told to go read a file. |
-| `model`, `effort`, `maxTurns` | No documented equivalent | Drop; the host chooses. |
-| `disallowedTools` | No documented equivalent | Express as an explicit prohibition in the body. |
-| `memory`, `background`, `isolation` | No documented equivalent | Drop. |
-| `tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, …` | `tools: ["bash", "edit", "view"]` per `plugins-creating`, OR `["read", "edit", "search"]` per a shipped port | **Unresolved** — see the Copilot frontmatter section above. Do not assert a mapping until the ambiguity is settled. |
+| `skills:` preload list | No documented equivalent | This is a capability loss, not a formatting difference — Claude injects full skill content at startup; a Copilot agent can only be told to go read a file. **Action**: list each skill by name and path in prose, near the top of the body, before the boundaries section, with an explicit instruction to read it. |
+| `model`, `effort`, `maxTurns` | No documented equivalent | **Action**: drop the fields; the host chooses. |
+| `disallowedTools` | No documented equivalent | **Action**: re-express as an explicit prohibition in the body, near the top, before the boundaries section — group it with the ported `skills:` prose so a reader sees both "must read" and "must not do" together. |
+| `memory`, `background`, `isolation` | No documented equivalent | **Action**: drop the fields; nothing to re-express. |
+| `tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, …` | `tools: ["bash", "edit", "view"]` per `plugins-creating`, OR `["read", "edit", "search"]` per a shipped port | **Unresolved** — see the Copilot frontmatter section above. **Action**: emit no `tools` key at all; leave a marker comment naming both candidates and the fact that neither is schema-backed, e.g. `<!-- tools: unresolved — "bash","edit","view" per plugins-creating vs "read","edit","search" per a shipped port; neither is schema-backed -->`. An absent key with a visible marker is recoverable later; a guessed key is invisible and permanent. |
 
 ## House conventions
 
