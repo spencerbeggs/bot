@@ -66,7 +66,11 @@ Detailed system prompt for the agent describing its role, expertise, and behavio
 
 **Not supported for plugin-shipped agents (security)**: `hooks`, `mcpServers`, `permissionMode` — these fields are ignored/rejected if present.
 
-**Frontmatter that doesn't parse**: Claude Code loads a plugin agent even when its frontmatter has no `name` or doesn't parse — it names the agent after the file, uses `Agent from my-plugin plugin` as its description, and ignores every field in the file. This is scope-specific: for **project, user and managed agents, invalid frontmatter causes the file to be skipped entirely** instead. Both failure modes are silent, with opposite symptoms — a plugin agent degrades in place and keeps running under a useless description, while a project/user/managed agent simply vanishes from the list.
+**Missing `name`, frontmatter otherwise valid**: Claude Code names the agent after the file, so `agents/reviewer.md` in a plugin named `my-plugin` loads as `my-plugin:reviewer`. Every other field — `tools`, `model`, `skills`, etc. — still applies.
+
+**Frontmatter that doesn't parse**: Claude Code names the agent after the file, uses `Agent from my-plugin plugin` as its description, and ignores every field in the file — nothing else survives.
+
+Both are plugin-scope fallbacks; **Claude Code skips a project, user, or managed agent file whose frontmatter has no `name` or doesn't parse** instead of applying either fallback. So the two cases diverge only for plugin agents: a plugin agent missing just `name` keeps its configured behavior under an inferred identity, a plugin agent with unparseable frontmatter degrades to a near-useless stub, and a project/user/managed agent with either defect simply vanishes from the list. All three failure modes are silent.
 
 Integration: agents appear in @-mention typeahead under scoped name (`my-plugin:code-reviewer`) once enabled; Claude can invoke automatically or be invoked manually; work alongside built-in agents.
 

@@ -28,7 +28,7 @@ Identical across both dialects — apply regardless of which frontmatter table b
 
 1. **`name` and `description` present.** Claude Code requires both. Copilot's CLI plugin reference documents no `.agent.md` frontmatter at all — including no required-field list — so treat both as required by house convention there too, not by a documented Copilot rule.
 2. **Description is "Use when...", third person, trigger-only.** No workflow summary — that belongs in the body.
-3. **`tools` matches what the system prompt actually calls.** Prefer an explicit allowlist over omitting it — inheriting everything makes a plugin agent unauditable.
+3. **`tools` matches what the system prompt actually calls.** Prefer an explicit allowlist over omitting it — on Claude Code, omitting `tools` inherits every tool, which makes a plugin agent unauditable. Copilot's `.agent.md` frontmatter is undocumented beyond the `tools` field itself, so no inheritance-on-omission behavior is documented there either way — the same discipline still applies as house convention.
 4. **The system prompt includes a boundaries section — "What this agent does NOT do."** Subagents receive only their own system prompt, not the main conversation's; without an explicit boundary list, an agent overshoots into work another agent or the main thread owns.
 5. **System prompt doesn't assume shared context** ("continue what we were doing") — subagents start cold.
 
@@ -36,11 +36,11 @@ Identical across both dialects — apply regardless of which frontmatter table b
 
 ### Claude Code frontmatter
 
-Fields: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `isolation` (only `"worktree"` is a valid value). Only `name` and `description` are required.
+Fields: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `isolation` (only `"worktree"` is a valid value). Only `name` and `description` are required. See `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/subagents.md` § Frontmatter fields for the full per-field contract.
 
 - **Plugin agents may not set `hooks`, `mcpServers` or `permissionMode`.** Claude Code drops all three at load time for plugin-scoped subagents, for security — see `subagents.md` § Plugin subagent restriction. Only flag them if (a) they're load-bearing for the agent's intended behavior and (b) plugin scope is the only delivery path — then propose moving the hook to `<plugin>/hooks/hooks.json` (matcher scoped to `agent_type`) or the MCP server to the plugin manifest's `mcpServers` block. Otherwise they're harmless portability leftovers; don't strip them reflexively.
 - **Agents are auto-named `<plugin-name>:<agent-name>`** (nested paths extend the name further, e.g. `agents/review/security.md` in `my-plugin` registers as `my-plugin:review:security`).
-- **A malformed frontmatter's fallback depends on scope.** A **plugin** agent with no `name` or unparseable frontmatter still loads — Claude Code names it after the file and gives it the description `Agent from my-plugin plugin`, ignoring every other field. A **project, user or managed** agent with the same defect is skipped entirely instead. Both fail silently, with opposite symptoms: a plugin agent degrades in place under a useless description, a project/user/managed agent simply vanishes. See `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/plugins-reference.md` § Agents.
+- **A missing `name` and an unparseable frontmatter are two different fallbacks — don't conflate them.** Missing `name` alone: Claude Code names the agent after the file (`agents/reviewer.md` in `my-plugin` loads as `my-plugin:reviewer`) and every other field — `tools`, `model`, `skills` — still applies. Frontmatter that doesn't parse at all: Claude Code names it after the file *and* gives it the description `Agent from my-plugin plugin`, ignoring every field. Both are plugin-scope fallbacks; a **project, user or managed** agent with either defect is skipped entirely instead — so the two cases diverge only for plugin agents, and all three outcomes are silent. See `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/plugins-reference.md` § Agents.
 - **`skills:` preloads only always-needed content.** Each entry injects full skill content at every startup — expensive. Conditional knowledge belongs in description- or path-triggered skills the agent discovers on demand, not here.
 - **Model choice is intentional**, not just an omitted default: `haiku` for read-only search, `sonnet` for mechanistic work, `opus`/`inherit` for reasoning-heavy tasks.
 - **`isolation: worktree`** set for agents that make destructive or exploratory changes to the working tree.
@@ -56,7 +56,7 @@ File must be `*.agent.md`. Copilot's CLI plugin reference documents **no `.agent
 
 ## Claude tool-name gotcha
 
-`tools` takes canonical tool names. The current roster includes `Agent`, `AskUserQuestion`, `Bash`, `Edit`, `Glob`, `Grep`, `Read`, `Write`, `Skill`, `ToolSearch`, `TodoWrite`, `WebFetch`, `WebSearch`, `SendMessage`, `ReportFindings`, `Task*`, `LSP`, `NotebookEdit`, `PowerShell`. A skill name appearing in a `tools` list is a common and silent error — it satisfies any test that merely greps the file for the name while granting nothing.
+`tools` takes canonical tool names. The current roster includes `Agent`, `AskUserQuestion`, `Bash`, `Edit`, `Glob`, `Grep`, `Read`, `Write`, `Skill`, `ToolSearch`, `TodoWrite`, `WebFetch`, `WebSearch`, `SendMessage`, `ReportFindings`, `Task*`, `LSP`, `NotebookEdit`, `PowerShell` — this list drifts as tools ship, so verify it against `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/tools.md` rather than trusting it as final. A skill name appearing in a `tools` list is a common and silent error — it satisfies any test that merely greps the file for the name while granting nothing.
 
 ## What does not port — Claude Code → Copilot
 
@@ -90,6 +90,8 @@ The table below is what a port must account for; a Copilot agent produced withou
 Claude Code layer:
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/subagents.md` — every frontmatter field, plugin-scope restrictions, model resolution order, tool-restriction syntax, memory scopes, `hooks`/`mcpServers` inline schemas, naming and discovery order.
+- `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/plugins-reference.md` — the plugin-agent frontmatter fallbacks (missing `name` vs. unparseable) and the project/user/managed contrast.
+- `${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/tools.md` — the canonical tool-name roster.
 
 Copilot layer:
 
