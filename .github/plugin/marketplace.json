@@ -11,7 +11,7 @@
 	"plugins": [
 		{
 			"name": "effected",
-			"description": "Effect v4 development skills, a GitHub Actions and GitHub API suite, specialist subagents (developer, reviewer, migrator, action-engineer), and a session briefing — distilled from the @effected package migrations and the official Effect-TS v4 guides. Covers the @effected kit index, the house style, Schema-as-classes, services & layers, core idioms, observability, testing, the v3→v4 migration reference with its ordered checklist, API-surface and hardening discipline, and twelve skills for building GitHub Actions, calling the GitHub API, running commands, publishing releases and attesting supply-chain artifacts",
+			"description": "Effect v4 development skills, a GitHub Actions and GitHub API suite, specialist subagents (developer, reviewer, action-engineer), and a session briefing — distilled from the @effected packages and the official Effect-TS v4 guides. Covers the @effected kit index, the house style, Schema-as-classes, services & layers, core idioms, observability, testing, API-surface and hardening discipline, and twelve skills for building GitHub Actions, calling the GitHub API, running commands, publishing releases and attesting supply-chain artifacts",
 			"author": {
 				"name": "C. Spencer Beggs",
 				"url": "https://spencerbeg.gs"
@@ -25,6 +25,23 @@
 				"repo": "spencerbeggs/effected",
 				"sha": "3a78aa4fed429b69e450fe90d63f71a168f5e0aa",
 				"path": "plugins/copilot"
+			}
+		},
+		{
+			"name": "plugin-bot",
+			"description": "Builds, tests and reviews agent plugins for Claude Code, GitHub Copilot and the portable Agent Skills layer — manifests, skills, agents, hooks and MCP wiring, with a stamped reference distillation per platform layer and an evidence ladder that forbids answering from memory.",
+			"author": {
+				"name": "C. Spencer Beggs",
+				"url": "https://spencerbeg.gs"
+			},
+			"homepage": "https://github.com/spencerbeggs/bot#readme",
+			"keywords": ["plugin", "claude-code", "copilot", "skills", "agents", "hooks"],
+			"license": "MIT",
+			"repository": "https://github.com/spencerbeggs/bot",
+			"source": {
+				"source": "github",
+				"repo": "spencerbeggs/bot",
+				"path": "plugins/plugin-bot/copilot"
 			}
 		}
 	]

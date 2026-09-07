@@ -131,3 +131,34 @@ target_workspaces() {
 		return 1
 	}
 }
+
+@test "marketplace entries pointing into this repo resolve to a target workspace" {
+	found=0
+	for mf in "${REPO_ROOT}/.claude-plugin/marketplace.json" \
+		"${REPO_ROOT}/.github/plugin/marketplace.json"; do
+		[ -f "$mf" ] || continue
+		while IFS= read -r p; do
+			[ -n "$p" ] || continue
+			found=$((found + 1))
+			[ -d "${REPO_ROOT}/${p}" ] || {
+				echo "$(basename "$mf"): source.path does not resolve: ${p}"
+				return 1
+			}
+			case "$(basename "$p")" in
+				claude-code | copilot) ;;
+				*)
+					echo "$(basename "$mf"): ${p} is not a target workspace"
+					return 1
+					;;
+			esac
+		done < <(jq -r '
+			.plugins[]
+			| select((.source.url // .source.repo // "") | test("spencerbeggs/bot"))
+			| .source.path // empty
+		' "$mf")
+	done
+	[ "$found" -gt 0 ] || {
+		echo "no self-referencing marketplace entries found — test would pass vacuously"
+		return 1
+	}
+}
