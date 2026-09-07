@@ -8,23 +8,40 @@ Nothing on this page is portable. The Agent Skills specification deliberately sa
 
 ## The path/scope table
 
-Support column key: **✓** supported, **(P)** preview.
+| Capability | Path | Scope |
+| :-- | :-- | :-- |
+| Repository custom instructions | `.github/copilot-instructions.md` | Repository |
+| Path-specific instructions | `.github/instructions/*.instructions.md` | Repository |
+| `AGENTS.md` | `AGENTS.md` | Repository, for third-party agent integration |
+| Personal / organization custom instructions | Set through the GitHub UI, not a file | Personal, Organization |
+| Prompt files | `.github/prompts/*.prompt.md` | Repository |
+| Custom agents — repository | `.github/agents/AGENT-NAME.md` | Repository |
+| Custom agents — organization | `/agents/AGENT-NAME.md` in the org's `.github` or `.github-private` repository | Organization |
+| Custom agents — enterprise | `/agents/AGENT-NAME.md` in the designated `.github-private` repository | Enterprise |
+| Custom agents — personal | User profile, through the UI | Personal |
+| Subagents | **No file** — a runtime process, not a user-configured surface | N/A |
+| Agent skills — project | `.github/skills/<skill-name>/SKILL.md`, `.claude/skills/<skill-name>/SKILL.md`, `.agents/skills/<skill-name>/SKILL.md` | Repository |
+| Agent skills — personal | `~/.copilot/skills/<skill-name>/SKILL.md`, `~/.agents/skills/<skill-name>/SKILL.md` | Personal |
+| Hooks | `.github/hooks/*.json` | Repository |
+| MCP configuration | `mcp.json` (location varies by IDE), repository MCP settings on GitHub, or an agent's `mcp-servers` property | Repository, Organization, Personal |
 
-| Capability | Path | Scope | Supported on |
-| :-- | :-- | :-- | :-- |
-| Repository custom instructions | `.github/copilot-instructions.md` | Repository | VS Code ✓, Visual Studio ✓, JetBrains (P), Eclipse (P), Xcode (P), GitHub.com ✓, Copilot CLI ✓ |
-| Path-specific instructions | `.github/instructions/*.instructions.md` | Repository | Same as repository custom instructions |
-| `AGENTS.md` | `AGENTS.md` | Repository, for third-party agent integration | Same as repository custom instructions |
-| Personal / organization custom instructions | Set through the GitHub UI, not a file | Personal, Organization | Same as repository custom instructions |
-| Prompt files | `.github/prompts/*.prompt.md` | Repository | VS Code ✓, Visual Studio ✓, JetBrains (P), Xcode (P) |
-| Custom agents — repository | `.github/agents/AGENT-NAME.md` | Repository | VS Code ✓, Visual Studio ✓, JetBrains (P), Eclipse (P), Xcode (P), GitHub.com ✓, Copilot CLI ✓ |
-| Custom agents — organization | `/agents/AGENT-NAME.md` in the org's `.github` or `.github-private` repository | Organization | Same as repository agents |
-| Custom agents — enterprise | `/agents/AGENT-NAME.md` in the designated `.github-private` repository | Enterprise | Same as repository agents |
-| Custom agents — personal | User profile, through the UI | Personal | Same as repository agents |
-| Agent skills — project | `.github/skills/<skill-name>/SKILL.md`, `.claude/skills/<skill-name>/SKILL.md`, `.agents/skills/<skill-name>/SKILL.md` | Repository | VS Code ✓, Visual Studio ✓, JetBrains (P), GitHub.com ✓, Copilot CLI ✓ |
-| Agent skills — personal | `~/.copilot/skills/<skill-name>/SKILL.md`, `~/.agents/skills/<skill-name>/SKILL.md` | Personal | Same as project skills |
-| Hooks | `.github/hooks/*.json` | Repository | VS Code (P), GitHub.com ✓, Copilot CLI ✓ |
-| MCP configuration | `mcp.json` (location varies by IDE), repository MCP settings on GitHub, or an agent's `mcp-servers` property | Repository, Organization, Personal | VS Code ✓, Visual Studio ✓, JetBrains ✓, Eclipse ✓, Xcode ✓, GitHub.com ✓, Copilot CLI ✓ |
+## The support matrix
+
+Key: **✓** supported, **P** preview, **✗** not supported. The ✗ marks are the load-bearing ones — a blank is not the same as a no.
+
+| Capability | VS Code | Visual Studio | JetBrains | Eclipse | Xcode | GitHub.com | Copilot CLI |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Custom instructions | ✓ | ✓ | P | P | P | ✓ | ✓ |
+| Prompt files | ✓ | ✓ | P | ✗ | P | ✗ | ✗ |
+| Custom agents | ✓ | ✓ | P | P | P | ✓ | ✓ |
+| Subagents | ✓ | ✗ | P | P | P | ✗ | ✓ |
+| Agent skills | ✓ | ✓ | P | ✗ | ✗ | ✓ | ✓ |
+| Hooks | P | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| MCP servers | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+The matrix is keyed by capability, not by the path rows above: every custom-agent scope shares the "Custom agents" row, and both skill scopes share the "Agent skills" row.
+
+**Subagents are in the matrix but have no authoring surface.** A subagent is "a separate agent spawned by the main agent to handle delegated work in an isolated context" — a runtime process, not a file you write. It is listed here so its absence from the path table is not read as an omission.
 
 ## Reading the table
 
@@ -34,7 +51,7 @@ Support column key: **✓** supported, **(P)** preview.
 
 **Hooks have exactly one repository path**: `.github/hooks/*.json`. That is also the only hook source the cloud agent reads at all.
 
-**Support is not uniform.** Prompt files are the narrowest row — no GitHub.com, no Copilot CLI — so a capability written as a prompt file is invisible to CLI and cloud workflows. Hooks are still preview in VS Code. If a capability must work on the CLI *and* in an IDE, check the row before choosing the surface.
+**Support is not uniform, and the gaps are explicit rather than merely unstated.** Prompt files are the narrowest row: **✗ on GitHub.com and ✗ on the Copilot CLI**, so a capability written as a prompt file is invisible to every CLI and cloud workflow. Skills are ✗ on Eclipse and Xcode. Hooks are ✗ on every IDE except VS Code, where they are still preview. If a capability must work on the CLI *and* in an IDE, read the matrix row before choosing the surface.
 
 ## Choosing a container
 

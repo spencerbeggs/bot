@@ -35,7 +35,7 @@ All optional. Only `agents` and `skills` have defaults; the rest load nothing un
 | :-- | :-- | :-- |
 | `agents` | `agents/` | Directory of `.agent.md` files |
 | `skills` | `skills/` | Directory of skill directories; may be an array of directories |
-| `commands` | — | Slash-command definitions |
+| `commands` | — | Slash-command definitions. **Format unsourced** — the reference names the field but neither it nor the how-tos documents the command file format. Do not infer one from this row. |
 | `hooks` | — | A `hooks.json` file (see `hooks-reference.md`) |
 | `extensions` | — | Client-specific data, the Agent Plugins escape hatch |
 | `mcpServers` | — | An MCP config file, conventionally `.mcp.json` |
@@ -81,7 +81,7 @@ The distribution mechanism, with no portable counterpart. Required: `name`, `own
 
 | Field | Required | Notes |
 | :-- | :-- | :-- |
-| `name` | Yes | Kebab-case, max 64 characters; dots permitted as for a plugin name. |
+| `name` | Yes | *"Kebab-case marketplace name. Max 64 chars. Dots are also accepted (for example, `acme.tools`) for Open Plugin Spec plugins."* |
 | `owner` | Yes | Object with `name` and an optional `email`. |
 | `plugins` | Yes | Array of plugin entries. |
 | `metadata` | No | `{ description?, version?, pluginRoot? }`. |
@@ -90,7 +90,14 @@ Each entry requires `name` and `source`. Optional entry fields: `description`, `
 
 **`strict` defaults to `true`** — full schema validation. Setting it `false` relaxes validation.
 
-A marketplace repository carries its `marketplace.json` under `.github/plugin/` (`.claude-plugin/` is also supported), and it is the only required component of a marketplace repository.
+`marketplace.json` is the only required component of a marketplace repository. The CLI searches four paths for it, **root first** — note this is not the plugin manifest's order, which leads with `.plugin/`:
+
+1. `marketplace.json`
+2. `.plugin/marketplace.json`
+3. `.github/plugin/marketplace.json`
+4. `.claude-plugin/marketplace.json`
+
+The marketplace how-to writes its examples under `.github/plugin/`, but that is one supported location out of four, not a requirement.
 
 ### Source objects
 

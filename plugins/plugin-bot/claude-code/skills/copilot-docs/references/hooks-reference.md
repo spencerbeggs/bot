@@ -36,10 +36,12 @@ Hooks are shell commands, HTTP calls or prompts fired at agent lifecycle points.
 | `subagentStart` | — |
 | `subagentStop` | `SubagentStop` |
 | `permissionRequest` | `PermissionRequest` |
-| `notification` | `Notification` |
+| `notification` | — (none documented; **Copilot CLI only**) |
 | `errorOccurred` | `ErrorOccurred` |
 
-The PascalCase spellings exist for VS Code / Claude-format compatibility, and they are not merely aliases: **under a PascalCase event name, Claude matcher semantics apply** (see below). Note that the two spellings diverge in more than case — `userPromptSubmitted` pairs with `UserPromptSubmit`, `agentStop` with `Stop` — and that `userPromptTransformed` and `subagentStart` have no PascalCase form.
+The PascalCase spellings exist for VS Code / Claude-format compatibility, and they are not merely aliases: **under a PascalCase event name, Claude matcher semantics apply** (see below). Note that the two spellings diverge in more than case — `userPromptSubmitted` pairs with `UserPromptSubmit`, `agentStop` with `Stop`.
+
+**Three events have no documented PascalCase form: `userPromptTransformed`, `subagentStart` and `notification`.** `notification` is documented in camelCase only, and it is **Copilot CLI only** — the page states it does not fire under the Copilot cloud agent.
 
 ## Handler types
 
@@ -119,16 +121,27 @@ Fields are **flat, not nested under a wrapper key**. Empty output means "no opin
 
 That last asymmetry is the one worth memorizing: a `preToolUse` policy hook blocks when it fails, but *not* when it hangs. A slow or unreachable hook cannot silently wedge the agent, and equally cannot be relied on as a hard gate.
 
-## Discovery
+## Discovery — sources accumulate, they do not override
 
-Copilot CLI, in order — **earlier sources override later ones**:
+**The single most important fact about hook sources, and the one most likely to be assumed backwards:**
 
-1. **Policy files**, non-disableable: `/etc/github-copilot/policy.d/*.json` (Linux/macOS) or `C:\ProgramData\GitHub\Copilot\policy.d\*.json` (Windows). On POSIX these must be owned by root and neither group- nor world-writable.
-2. **Repository**: `.github/hooks/*.json`, plus inline `hooks` in `.github/copilot/settings.json` or `.claude/settings.json`.
-3. **User**: `~/.copilot/hooks/*.json`, plus inline `hooks` in `~/.copilot/settings.json`.
-4. **Plugins**: the plugin's declared `hooks.json` or `hooks/hooks.json`.
+> "When the same event appears in multiple sources, all hook entries from all sources are run."
 
-Plugin hooks load last, so anything at repository or user scope wins over what your plugin ships.
+There is no shadowing. A repository-level hook does **not** replace a plugin's hook on the same event; both fire. Two consequences follow directly, and both bite:
+
+- **A `preToolUse` deny in *any* source wins.** You cannot relax a stricter hook by shipping a permissive one at a different scope.
+- **A side-effecting hook registered at two scopes runs twice.** If your plugin ships a `postToolUse` logger and the repository ships one too, every tool call is logged twice.
+
+The sources themselves:
+
+- **Policy files**, non-disableable: `/etc/github-copilot/policy.d/*.json` (Linux/macOS) or `C:\ProgramData\GitHub\Copilot\policy.d\*.json` (Windows). On POSIX these must be owned by root and neither group- nor world-writable.
+- **Repository**: `.github/hooks/*.json`, plus an inline `hooks` block in `.github/copilot/settings.json` or `.claude/settings.json`.
+- **User**: `~/.copilot/hooks/*.json`, plus an inline `hooks` block in `~/.copilot/settings.json`.
+- **Plugins**: the plugin's declared `hooks.json` or `hooks/hooks.json`.
+
+**Load order is stated inconsistently upstream and is recorded here as unresolved.** The page's prose says the sources load "policy, then user, then project, then plugins", while the page's own enumeration below that sentence puts repository-level files ahead of user-level files. Both readings are on the page; neither is marked authoritative, and this reference does not pick one.
+
+**That ambiguity does not matter for whether a hook fires.** Because every entry from every source runs, load order determines nothing about precedence. Do not let a claim about ordering smuggle in a claim about shadowing — if you find yourself reasoning "mine loads later, so theirs is ignored", the premise is wrong regardless of which order is correct.
 
 ## Cloud agent constraints
 
