@@ -44,6 +44,7 @@ skills/
 
 - Skills and commands are auto-discovered when the plugin is installed; Claude can invoke them automatically based on task context.
 - If a plugin has no `skills/` directory and no `skills` manifest field, a `SKILL.md` at plugin root loads as a single skill. Use `skills/` layout for plugins shipping more than one skill. Invocation-name fallback rule — see [Path behavior rules](#path-behavior-rules).
+- **Boolean frontmatter fields accept more than `true`/`false`.** In plugin skills and commands, boolean frontmatter fields such as `disable-model-invocation` accept `yes`, `no`, `on`, `off`, `1`, and `0` in any letter case, in addition to `true` and `false`. Before v2.1.218, Claude Code recognized only `true` and `false`.
 
 ### Agents
 
