@@ -5,7 +5,7 @@ user-invocable: false
 paths:
   - "**/.claude-plugin/plugin.json"
   - "**/.claude-plugin/marketplace.json"
-  - "**/copilot/plugin.json"
+  - "**/plugin.json"
   - "**/.github/plugin/marketplace.json"
   - "**/.mcp.json"
   - "**/mcp.json"
@@ -27,7 +27,7 @@ Read the target off the path before applying any rule. A rule marked for the oth
 | `plugins/*/copilot/**` | Copilot | root `plugin.json` |
 | Neither, and `$schema` is `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json` | Agent Plugins 1.0 | root `plugin.json` |
 
-If the file is not under a target workspace and carries no Agent Plugins `$schema`, confirm it is a plugin manifest at all before continuing — the `**/.mcp.json`, `**/mcp.json`, `**/.lsp.json` and `**/lsp.json` globs also match ordinary project files that have nothing to do with plugins.
+If the file is not under a target workspace and carries no Agent Plugins `$schema`, confirm it is a plugin manifest at all before continuing. The bare `**/plugin.json` glob deliberately covers Copilot's idiomatic root manifest and its `.plugin/` and `.github/plugin/` variants, and `**/.mcp.json`, `**/mcp.json`, `**/.lsp.json` and `**/lsp.json` also match ordinary project files that have nothing to do with plugins.
 
 ## Shared checklist
 
