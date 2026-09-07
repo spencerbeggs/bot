@@ -3,10 +3,8 @@ name: plugin-manifest
 description: Enforces manifest well-formedness when a plugin or marketplace manifest is opened for authoring or review — Claude Code's .claude-plugin/plugin.json and marketplace.json, Copilot's root plugin.json and .github/plugin/marketplace.json, and the MCP/LSP config files beside them. Covers the per-host manifest search orders, component-path fields and their add-vs-replace semantics, the extensions escape hatch, source-object variants, the tracking-package rule, and the house version policy.
 user-invocable: false
 paths:
-  - "**/.claude-plugin/plugin.json"
-  - "**/.claude-plugin/marketplace.json"
   - "**/plugin.json"
-  - "**/.github/plugin/marketplace.json"
+  - "**/marketplace.json"
   - "**/.mcp.json"
   - "**/mcp.json"
   - "**/.lsp.json"
@@ -26,12 +24,15 @@ Read the target off the path before applying any rule. A rule marked for the oth
 | `plugins/*/claude-code/**` | Claude Code | `.claude-plugin/plugin.json` |
 | `plugins/*/copilot/**` | Copilot | root `plugin.json` |
 | Neither, and `$schema` is `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json` | Agent Plugins 1.0 | root `plugin.json` |
+| Neither, and no Agent Plugins `$schema` | **Default: Copilot** | root `plugin.json`, `.plugin/`, `.github/plugin/` |
 
-If the file is not under a target workspace and carries no Agent Plugins `$schema`, confirm it is a plugin manifest at all before continuing. The bare `**/plugin.json` glob deliberately covers Copilot's idiomatic root manifest and its `.plugin/` and `.github/plugin/` variants, and `**/.mcp.json`, `**/mcp.json`, `**/.lsp.json` and `**/lsp.json` also match ordinary project files that have nothing to do with plugins.
+The last row is the default, and it is deliberate rather than a fallthrough: a bare root `plugin.json` is Copilot's own format, so treat an unanchored one as Copilot unless something says otherwise. **Claude Code is claimed only by parentage** — the manifest's directory is `.claude-plugin/` — never by content sniffing. The bare `**/plugin.json` and `**/marketplace.json` globs cover Copilot's idiomatic root manifests and all their `.plugin/`, `.github/plugin/` and `.claude-plugin/` variants in one line each.
+
+Before applying any rule, confirm the file is a plugin manifest at all: `**/mcp.json`, `**/.mcp.json`, `**/lsp.json` and `**/.lsp.json` also match ordinary project files that have nothing to do with plugins, and a stray `plugin.json` belonging to some other tool is possible even though no common toolchain claims that name.
 
 ## Shared checklist
 
-1. **`name` and `description` present**; `description` is a single sentence stating what the plugin does. Both dialects cap `description` at 1024 characters and constrain `name` to lower-case kebab — but the grammars are not identical (Agent Plugins and Copilot permit dots, Claude Code does not), so check the grammar against your layer's reference.
+1. **`name` and `description` present**; `description` is a single sentence stating what the plugin does. Do not carry a limit across layers: **only Copilot documents a cap** on a plugin manifest's `description` (1024 characters) or its `name` (64) — Claude Code and Agent Plugins state neither for `description`. (The 1024 you may be recalling elsewhere is the *skill* frontmatter cap, a different field on a different file.) The `name` grammars are not identical either: Agent Plugins spells its character class out and permits dots, Copilot permits dots for Open-Plugin-Spec compliance, and Claude Code documents only "kebab-case, no spaces" — which is not a stated prohibition on anything. Check your layer's reference rather than assuming the strictest rule applies everywhere.
 2. **Every plugin-owned path reference uses the layer's placeholder** — in `mcpServers`/`lspServers` `command`/`args`/`cwd`/`env`, in hook commands, in any bundled-script reference. Bare relative paths break once the plugin runs from a cache install rather than a checkout. **No placeholder spelling is universal**, and `${COPILOT_PLUGIN_ROOT}` is defined by nothing; get the spelling for your layer from `agent-plugins-docs/references/cross-client-behavior.md` § Placeholder vocabulary rather than from memory.
 3. **Hook registrations live in a `hooks.json`, not inline in the manifest.** Under Claude Code that file is `hooks/hooks.json`; keeping it separate lets `/reload-plugins` pick up hook edits without restarting MCP/LSP servers keyed off `plugin.json`. Under Copilot the `hooks` manifest field points at a `hooks.json`. Hooks are outside Agent Plugins 1.0 entirely — a portable manifest cannot carry them.
 4. **`mcpServers`/`lspServers` entries resolve their own `command`.** For npm-shim binaries (`.cmd`/`.bat`, or `node_modules/.bin` shims) invoke `node` directly with the script path in `args`, not the shim by exec form. Under Agent Plugins 1.0 `command` is a single executable token, never a shell string, and is **never** placeholder-expanded.
@@ -75,7 +76,7 @@ Under **Agent Plugins 1.0** component locations are fixed and the manifest canno
 | Claude Code | `github`, `url`, `git-subdir`, `npm` | `git-subdir` takes `url` + `path`, plus optional `ref`/`sha` |
 | Copilot | `github`, `url` | `github` takes `repo` (`owner/repo`), plus optional `ref`/`path`/`sha` |
 
-Both accept a plain repo-relative path string instead. Both accept `sha` — and **pinning a `sha` is what makes an install immune to force-pushes and tag or branch moves.** Where both `ref` and `sha` are set, `sha` is the effective pin.
+Both accept a plain repo-relative path string instead. Both accept `sha` — and **pinning a `sha` is what makes an install immune to force-pushes and tag or branch moves.** Where both `ref` and `sha` are set, Claude Code makes `sha` the effective pin; Copilot documents the `sha` recommendation but not a precedence rule, so do not assume the same resolution there.
 
 ### Claude-only manifest fields
 
