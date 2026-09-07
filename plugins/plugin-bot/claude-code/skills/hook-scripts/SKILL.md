@@ -1,6 +1,6 @@
 ---
 name: hook-scripts
-description: Enforces the house hook-script contract when a hook script or a hook registration is opened for authoring or review — Claude Code's hooks/hooks.json, Copilot's root hooks.json and .github/hooks/*.json, and any hooks/**/*.sh. Covers the per-host exit-code contracts (which are not the same contract and not universal within a host), the registration-shape and event-vocabulary deltas, portable plugin-root resolution, subdirectory-per-event layout, lib helpers, fixtures, silent-truncation traps, and BATS coverage.
+description: Enforces the house hook-script contract when a hook script or a hook registration is opened for authoring or review — Claude Code's hooks/hooks.json, Copilot's root hooks.json and .github/hooks/*.json, and any hooks/**/*.sh or hooks/**/*.bash. Covers the per-host exit-code contracts (which are not the same contract and not universal within a host), the registration-shape and event-vocabulary deltas, portable plugin-root resolution, subdirectory-per-event layout, lib helpers, fixtures, silent-truncation traps, and BATS coverage.
 user-invocable: false
 paths:
   - "**/hooks/**/*.sh"
@@ -29,6 +29,8 @@ Read the target off the path before applying any rule. A rule marked for the oth
 Hooks are **outside Agent Plugins 1.0 entirely** — the spec leaves them to the hosts, so there is no portable third dialect to write and no portable manifest can carry a hook. A plugin that must hook both hosts ships two registration files; only the script bodies are shared. See `agent-plugins-docs/references/agent-plugins-spec.md`.
 
 The `**/hooks.json` and `**/hooks/*.json` globs are deliberately bare: between them they catch Claude's `hooks/hooks.json`, Copilot's root `hooks.json`, `.github/hooks/*.json` and `~/.copilot/hooks/*.json` without enumerating install layouts. The cost is false positives — confirm the file is a hook registration before applying a rule, because `hooks/*.json` also matches ordinary project JSON.
+
+**Known blind spot: inline `hooks` blocks in settings files.** Copilot also reads hook registrations from a `hooks` block inside `.github/copilot/settings.json`, `~/.copilot/settings.json` or `.claude/settings.json` (`copilot-docs/references/hooks-reference.md` § Discovery), and Claude Code from its own settings files. No glob here matches those — `**/settings.json` would over-trigger on every unrelated settings file in a repo. **Every rule below still applies to a hook you author there; nothing will load this checklist for you.** Read it deliberately when editing an inline `hooks` block.
 
 ## Shared checklist
 
