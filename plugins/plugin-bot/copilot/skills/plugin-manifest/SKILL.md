@@ -1,0 +1,150 @@
+---
+name: plugin-manifest
+description: Read before creating or editing any plugin or marketplace manifest — Claude Code's .claude-plugin/plugin.json and marketplace.json, Copilot's root plugin.json and .github/plugin/marketplace.json — or any .mcp.json, mcp.json, .lsp.json or lsp.json beside them. Nothing loads this skill automatically on this host, so reach for it yourself the moment one of those files comes into scope. Enforces manifest well-formedness: the per-host manifest search orders, component-path fields and their add-vs-replace semantics, the extensions escape hatch, source-object variants, the tracking-package rule, and the house version policy.
+---
+
+# Plugin manifest checklist
+
+Apply this to the file you are about to create or edit. This host fires no skill on a file being opened, so you are reading this because you reached for it — finish it before the first edit, not after. The mistake that matters most: hand-bumping `version` in this repo — versions here are CI-managed, not author-managed. The second: assuming one manifest dialect's rules apply to the other.
+
+## Which layer are you in?
+
+Read the target off the path before applying any rule. A rule marked for the other layer does not apply.
+
+| Path shape | Layer | Manifest |
+| :-- | :-- | :-- |
+| `plugins/*/claude-code/**` | Claude Code | `.claude-plugin/plugin.json` |
+| `plugins/*/copilot/**` | Copilot | root `plugin.json` |
+| Neither, and `$schema` is `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json` | Agent Plugins 1.0 | root `plugin.json` |
+| Neither, and no Agent Plugins `$schema` | **Default: Copilot** | root `plugin.json`, `.plugin/`, `.github/plugin/` |
+
+The last row is the default, and it is deliberate rather than a fallthrough: a bare root `plugin.json` is Copilot's own format, so treat an unanchored one as Copilot unless something says otherwise. **Claude Code is claimed only by parentage** — the manifest's directory is `.claude-plugin/` — never by content sniffing. The bare `**/plugin.json` and `**/marketplace.json` globs cover Copilot's idiomatic root manifests and all their `.plugin/`, `.github/plugin/` and `.claude-plugin/` variants in one line each.
+
+Before applying any rule, confirm the file is a plugin manifest at all: `**/mcp.json`, `**/.mcp.json`, `**/lsp.json` and `**/.lsp.json` also match ordinary project files that have nothing to do with plugins, and a stray `plugin.json` belonging to some other tool is possible even though no common toolchain claims that name.
+
+## Shared checklist
+
+1. **`name` present, and `description` present as house craft** — `description` is a single sentence stating what the plugin does. Note that only Agent Plugins marks `name` required in a table; `description` is optional in all three schemas, so requiring it here is our rule, not the format's. **The `name` and `description` constraints do not span layers — check yours:**
+
+   | Layer | `name` grammar | `name` length | `description` length |
+   | :-- | :-- | :-- | :-- |
+   | Claude Code | "kebab-case, no spaces" — no character class published | Not documented | Not documented |
+   | Copilot | Kebab-case; dots permitted for Open-Plugin-Spec compliance | Max 64 | Max 1024 |
+   | Agent Plugins 1.0 | `a-z`, `0-9`, `-`, `.`; alphanumeric first and last; no `--`, no `..` | 1–64 | Not documented |
+
+   Two traps in that table. Claude Code's row is an *absence of published constraint*, not a permission and not a prohibition — do not reject a name for violating a rule Claude Code never stated. And the 1024 you may be recalling for a description is the **skill** frontmatter cap, a different field on a different file; do not apply it to a plugin manifest outside Copilot.
+2. **Every plugin-owned path reference uses the layer's placeholder** — in `mcpServers`/`lspServers` `command`/`args`/`cwd`/`env`, in hook commands, in any bundled-script reference. Bare relative paths break once the plugin runs from a cache install rather than a checkout. **No placeholder spelling is universal**, and `${COPILOT_PLUGIN_ROOT}` is defined by nothing; get the spelling for your layer from `agent-plugins-docs/references/cross-client-behavior.md` § Placeholder vocabulary rather than from memory.
+3. **Hook registrations live in a `hooks.json`, not inline in the manifest.** Under Claude Code that file is `hooks/hooks.json`; keeping it separate lets `/reload-plugins` pick up hook edits without restarting MCP/LSP servers keyed off `plugin.json`. Under Copilot the `hooks` manifest field points at a `hooks.json`. Hooks are outside Agent Plugins 1.0 entirely — a portable manifest cannot carry them.
+4. **`mcpServers`/`lspServers` entries resolve their own `command`.** For npm-shim binaries (`.cmd`/`.bat`, or `node_modules/.bin` shims) invoke `node` directly with the script path in `args`, not the shim by exec form. Under Agent Plugins 1.0 `command` is a single executable token, never a shell string, and is **never** placeholder-expanded.
+5. **`version` field is NOT hand-edited in this repo.** See house version policy below.
+6. **Pick one form for MCP/LSP config — a file or the manifest's inline `mcpServers`/`lspServers` key — and don't duplicate a server in both.** Where the file lives is a per-layer question, and only two layers make it a contract: Agent Plugins 1.0 **fixes** it at `mcp.json` in the plugin root, and Claude Code expects `.mcp.json` at the plugin root. Copilot's `mcpServers` is a manifest field pointing at a config file, which `copilot-docs/references/plugin-reference.md` describes as **"conventionally `.mcp.json`"** — a convention, not a location Copilot enforces. Do not reject a Copilot manifest for pointing somewhere else.
+7. **A marketplace entry's `source` is a relative path string or a source object** — both hosts document both forms. Don't set `version` in two places expecting independent control: **Claude Code** documents the resolution order (the plugin manifest's `version` wins over the entry's, then the git SHA); Copilot documents no precedence between the two, so under Copilot a divergence is simply unresolved rather than resolved your way. Object variants differ by layer; see the deltas.
+8. **Schema-validation warnings resolved, not ignored.** Claude Code: `claude plugin validate` treats a misspelled or leftover field as a warning, not an error, unless `--strict` is used — always run with `--strict` here. Copilot: a marketplace entry's `strict` defaults to `true`; setting it `false` to silence a complaint is hiding the same class of mistake.
+9. **A `package.json` beside the manifest is a tracking package, not a publishable one.** See below.
+
+## Layer deltas
+
+### Manifest search order — per-host, never merged
+
+Each host has its own order and they are **not** the same list. VS Code detects by root manifest and does not list `.github/plugin/plugin.json` at all; the Copilot CLI searches four paths leading with `.plugin/`; Agent Plugins 1.0 defines no order at all and requires the manifest at root `plugin.json` and nowhere else. Both orders are printed side by side in `agent-plugins-docs/references/cross-client-behavior.md` § Manifest search order, and Copilot's own in `copilot-docs/references/plugin-reference.md`. Never restate them as one merged list.
+
+The consequence that holds either way: **both hosts read `.claude-plugin/plugin.json`.** A Claude manifest inside a Copilot tree is therefore discovered, not broken — it is merely not idiomatic. Flag it as a style point, not an error. The real hazard is a repo carrying more than one manifest, which the two orders resolve to different formats.
+
+### `$schema`
+
+**Required** under Agent Plugins 1.0, and it must be the exact 1.0.0 URL — a client must reject a plugin whose declared version it does not support. **Optional** under both Claude Code and Copilot; Claude Code additionally documents that it is **ignored at load**, while Copilot's reference lists the field without saying what it does with it, so treat "ignored" as a Claude Code fact rather than a shared one. A missing `$schema` is a fatal defect in a portable manifest and a non-issue in the other two.
+
+### `extensions`
+
+Agent Plugins 1.0's reverse-domain-keyed escape hatch — the **only** sanctioned way to carry client-specific data in one portable manifest (`com.github.copilot`, and so on). Client-specific *files* go under a top-level directory named for the same namespace. A parallel or supplementary manifest file is not an alternative; the spec forecloses it.
+
+### Component-path semantics are not uniform
+
+Under **Claude Code** a declared path can silently replace the default scan:
+
+- **Replaces the default**: `commands`, `agents`, `workflows`, `outputStyles`, `experimental.themes`, `experimental.monitors`. The classic mistake is setting `"commands": [...]` and silently losing the default `commands/` directory — list it explicitly to keep it (`["./commands/", "./extras/"]`).
+- **Adds to the default**: `skills` alone. This asymmetry is the footgun; do not generalize either half of it.
+
+Under **Copilot** the component-path fields are plain defaults, and only `agents` and `skills` have one — the rest load nothing unless declared. Copilot's `commands` field has **no documented file format anywhere**; `copilot-docs/references/plugin-reference.md` marks it unsourced. Do not infer a format for it, and do not treat its absence as a defect to fix.
+
+Under **Agent Plugins 1.0** component locations are fixed and the manifest cannot override them or carry inline component config.
+
+### Source objects
+
+| Layer | Object form | Keys |
+| :-- | :-- | :-- |
+| Claude Code | `github`, `url`, `git-subdir`, `npm` | `git-subdir` takes `url` + `path`, plus optional `ref`/`sha` |
+| Copilot | `github`, `url` | `github` takes `repo` (`owner/repo`), plus optional `ref`/`path`/`sha` |
+
+Both accept a plain repo-relative path string instead. Both accept `sha` — and **pinning a `sha` is what makes an install immune to force-pushes and tag or branch moves.** Where both `ref` and `sha` are set, Claude Code makes `sha` the effective pin; Copilot documents the `sha` recommendation but not a precedence rule, so do not assume the same resolution there.
+
+### Claude-only manifest fields
+
+`displayName`, `defaultEnabled`, `workflows`, `outputStyles`, `experimental.*`, `userConfig`, `channels` and `dependencies` exist only in the Claude Code manifest. Each one used is a portability cost: it has no Copilot equivalent, and in a portable manifest it is an unknown top-level field — reported and ignored, so the behavior silently vanishes rather than failing loudly. Several are also version-gated; check the gate in `plugins-reference.md` before relying on one.
+
+## House version policy
+
+This repo's plugins are versioned by CI. **Do not hand-bump `version` in a plugin manifest or a `marketplace.json`.** If a change needs a version bump, that's a release-process concern, not something to fix inline while editing the manifest for an unrelated reason. Flag a manual version edit in review rather than making one yourself.
+
+## The tracking package beside the manifest
+
+Every target workspace carries a `package.json` next to its plugin manifest. It is a **tracking package** — it exists only to give changesets something to version so the manifest is bumped, tagged and released in lockstep. It must:
+
+- be `"private": true`,
+- carry **no** `publishConfig`,
+- be named `@<plugin>/<target>-plugin` (e.g. `@plugin-bot/claude-code-plugin`).
+
+Its `version` and the manifest's `version` move together, under changesets. **Hand-editing either one is a defect** — including "fixing" a drift between them by editing the other.
+
+This is repo policy, not a platform contract, so it has no upstream reference behind it. The live instance is `plugins/plugin-bot/claude-code/package.json` — read it to confirm the shape, and keep this rule in sync with it. `plugins/__test__/canonical-layout.bats` enforces the naming, privacy and version-file rules in CI.
+
+## Validate before finishing
+
+Claude Code manifest work is not done until this passes:
+
+```bash
+claude plugin validate <plugin-path> --strict
+```
+
+`--strict` promotes warnings (misspelled fields, wrong types, leftover fields from another tool's manifest) to errors — the default mode lets a plugin with only warnings pass and load anyway, which hides the kind of mistake this checklist exists to catch.
+
+Copilot's CLI reference lists no validate command. Install and exercise instead — and note that **a local install caches its components**, so re-install after editing in place or the CLI keeps serving the previous copy:
+
+```bash
+copilot plugin install ./my-plugin
+copilot plugin list
+```
+
+## Common mistakes
+
+- Presenting the two hosts' manifest search orders as one merged list.
+- Flagging `.claude-plugin/plugin.json` in a Copilot tree as an error — both hosts read it; it is a style point.
+- Omitting `$schema` from an Agent Plugins 1.0 manifest (fatal), or expecting it to do anything under Claude Code (ignored).
+- Setting a Claude `commands`/`agents`/`workflows`/`outputStyles` path and silently losing the default directory.
+- Assuming Copilot's `commands` has a known file format — it does not; nothing documents one.
+- Reaching for a parallel manifest to serve two hosts instead of `extensions` plus a namespaced directory.
+- Bare relative path in an `mcpServers`/`lspServers` `command` — breaks under cache-install cwd.
+- Writing `${COPILOT_PLUGIN_ROOT}`, or `${PLUGIN_DATA}` in a Copilot-targeted file — neither expands.
+- Manual `version` bump alongside an unrelated manifest edit, or hand-editing the tracking `package.json` version.
+- Running `claude plugin validate` without `--strict` and treating a clean run as sufficient.
+- `.cmd`/`.bat` shim referenced via exec form (`args` present) — spawn fails; invoke the underlying script with `node` instead, or drop to shell form.
+
+## Read for the full contract
+
+Claude Code layer:
+
+- the `anthropic-docs` skill's `references/plugins-reference.md` — full manifest schema, component locations, add-vs-replace table, path-substitution rules, `${CLAUDE_PLUGIN_ROOT}`/`${CLAUDE_PLUGIN_DATA}` contracts, version resolution order, `claude plugin` CLI.
+- the `anthropic-docs` skill's `references/mcp.md` — `.mcp.json` server shapes, plugin-scoped tool naming, OAuth, timeouts.
+- the `anthropic-docs` skill's `references/plugin-marketplaces.md` — `marketplace.json` schema, plugin source variants, `ref`/`sha` precedence, hosting, team/managed configuration.
+
+Copilot layer:
+
+- the `copilot-docs` skill's `references/plugin-reference.md` — `plugin.json` fields, component paths, `lspServers` schema, `marketplace.json` and its `strict` flag, Copilot's own search order, install locations, loading precedence, CLI commands.
+- the `copilot-docs` skill's `references/hooks-reference.md` — Copilot's `hooks.json` contract.
+
+Portable layer:
+
+- the `agent-plugins-docs` skill's `references/agent-plugins-spec.md` — the closed schema, `name` grammar, failure boundaries, `extensions`, fixed component locations, `mcp.json`.
+- the `agent-plugins-docs` skill's `references/cross-client-behavior.md` — both manifest search orders side by side, the placeholder vocabulary matrix, where each host looks for skills, the portability split.
+
+Scaffolding a brand-new plugin rather than auditing a manifest? Invoke the `plugin-setup` skill for the bootstrap checklist and the house `hooks/lib/` templates.

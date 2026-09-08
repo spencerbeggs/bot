@@ -1,0 +1,121 @@
+{
+	"entries": {
+		"agents/plugin-engineer.md": {
+			"sourceHash": "sha256:ec893cc8cfd6594adad9541cfc1e6e6f6f371784cda97e1b4e76a1537ddc89fc"
+		},
+		"skills/agent-authoring/SKILL.md": {
+			"sourceHash": "sha256:899f91e1d0f7ac1e8d3db35e0051fe3d895527b9589c195ff981a510b6f2d1e8"
+		},
+		"skills/agent-plugins-docs/SKILL.md": {
+			"sourceHash": "sha256:3213ee4f608292098382cc8d8173ed7adff097cefaff6324e5eba938332a463b"
+		},
+		"skills/agent-plugins-docs/references/agent-plugins-spec.md": {
+			"sourceHash": "sha256:b1cabad06889c86e221323b958abab43968f7decfb346ca72d95c05a29d11bb0"
+		},
+		"skills/agent-plugins-docs/references/agent-skills-spec.md": {
+			"sourceHash": "sha256:188e35be396ba4d307e944ce5c1ea9728420c32a79f0fa635a9aec6915501620"
+		},
+		"skills/agent-plugins-docs/references/cross-client-behavior.md": {
+			"sourceHash": "sha256:ae30adaa8ba77967030a67481c6a3d57eb791d5de8fe0996c862b36f6140a965"
+		},
+		"skills/agent-plugins-docs/references/skill-authoring-guidance.md": {
+			"sourceHash": "sha256:b336891f385e479a43cffea6104221d7e0caf189e5a49f7200ff87c4a7a4e4b7"
+		},
+		"skills/anthropic-docs/SKILL.md": {
+			"sourceHash": "sha256:6fe26e6a98f8f23a54719f206900c19cb0aea9bda1f023a79d055031dab31a8e"
+		},
+		"skills/anthropic-docs/references/channels.md": {
+			"sourceHash": "sha256:b974b5bf00b157ab6f10e9b633a555041dbd11d8a30e8ab1b0aae965fc4a23bc"
+		},
+		"skills/anthropic-docs/references/env-vars.md": {
+			"sourceHash": "sha256:7134d5ec990d19d125ec41d6675c146a9cc1e10e47f6c413511bf9871feabb6c"
+		},
+		"skills/anthropic-docs/references/hook-events.md": {
+			"sourceHash": "sha256:96e5aa2412b692859c43f564bf628f4ab43e96fa1428347646316a8ff90495c5"
+		},
+		"skills/anthropic-docs/references/hooks.md": {
+			"sourceHash": "sha256:2c546b5f5963d64469e7661782fd3182b0494438dd5724adf20a4b29f510d87d"
+		},
+		"skills/anthropic-docs/references/mcp.md": {
+			"sourceHash": "sha256:f7cd8c36441b43b5135f2b146357359837e19d53981a5a1113874264e06a532e"
+		},
+		"skills/anthropic-docs/references/plugin-marketplaces.md": {
+			"sourceHash": "sha256:a1932e367304a3a7f05e31a00c9e200028e2d84e0c731ef14ae2f85af2e68938"
+		},
+		"skills/anthropic-docs/references/plugins-reference.md": {
+			"sourceHash": "sha256:6c99ed6741891dc2d163d6cdf13d4097def7832921005f19878f3231626e835c"
+		},
+		"skills/anthropic-docs/references/plugins.md": {
+			"sourceHash": "sha256:a7e4467edfdd479f962491d686cf94b384c899f09bc3eb37cda860f8481b45d9"
+		},
+		"skills/anthropic-docs/references/skill-best-practices.md": {
+			"sourceHash": "sha256:98dedb2240988801078964ff1f83c4796671ac04d075ca9d1da037eb95439fa1"
+		},
+		"skills/anthropic-docs/references/skills.md": {
+			"sourceHash": "sha256:1ee01c56632e193c76ef92824ae893e6fcf166fb084a927d4b33ecdbb18781bf"
+		},
+		"skills/anthropic-docs/references/subagents.md": {
+			"sourceHash": "sha256:556ad674033de27f50a4dead32e8995c465cc6659b2cab17f205aa0679508c91"
+		},
+		"skills/anthropic-docs/references/tools.md": {
+			"sourceHash": "sha256:b2bbb5a1cf6927d42a8f44686265a86351a686c2d7d6b8c6518d465e7532567e"
+		},
+		"skills/copilot-docs/SKILL.md": {
+			"sourceHash": "sha256:d0714a3fa258ee129b9b5e881c10a23ede687b050fa1ba7f70297963b51e7e20"
+		},
+		"skills/copilot-docs/references/customization-surfaces.md": {
+			"sourceHash": "sha256:c4f38c160fa90ea91c8c3f1d7ec2d4304d4b6e889047ff52ba47bdee35d02e29"
+		},
+		"skills/copilot-docs/references/hooks-reference.md": {
+			"sourceHash": "sha256:08f694efa22cc19d602ae773d45696e057f1c1ce0ab839f9b82d0acc7a2098e0"
+		},
+		"skills/copilot-docs/references/plugin-reference.md": {
+			"sourceHash": "sha256:0c8a630bd4e95e0b2479a282f55c7afc575bd5e7893ede521b5f9a643f722f8c"
+		},
+		"skills/hook-scripts/SKILL.md": {
+			"sourceHash": "sha256:04cda8df9ce23a8a068d8ee9955298eb7840f375329882626d4cfef0fda413df"
+		},
+		"skills/monitors/SKILL.md": {
+			"sourceHash": "sha256:e8bf853c3806e6723509084e298f817899793533eedc3c583a3e9eaadb647b60"
+		},
+		"skills/monitors/references/notification-copy.md": {
+			"sourceHash": "sha256:1d29cf14c04fdaa968c5014d82383cce2791656598090a46e4129b9a062d109a"
+		},
+		"skills/persuasion/SKILL.md": {
+			"sourceHash": "sha256:1c3c8df2b71f4d0df51eb045a4a128d0ab32fd95b64377f79737d0c4114409a1"
+		},
+		"skills/plugin-manifest/SKILL.md": {
+			"sourceHash": "sha256:6bc086452f14540a00a8408010ca7657748e9e1f6ab94e993dbe8ba50f76dbb3"
+		},
+		"skills/plugin-setup/SKILL.md": {
+			"sourceHash": "sha256:60d2733d7138e1a3d7d4a62ea87e2d97c5f32c7f6b5a1d1073eb0d7cecd77d50"
+		},
+		"skills/plugin-setup/references/layout.md": {
+			"sourceHash": "sha256:00af1c8175bea896a105e3374357ecc846cba90d547de891956bfb5fd5dca5c9"
+		},
+		"skills/plugin-setup/references/session-env.md": {
+			"sourceHash": "sha256:508c4bd977a2cb5af349b8264e9ca46e69652daf4d292b76f40667399afd7c8c"
+		},
+		"skills/porting-to-copilot/SKILL.md": {
+			"sourceHash": "sha256:686374118c3dd1346de1893ae82f84e0ff97fba8527a3223475fe7d573a71a4f"
+		},
+		"skills/porting-to-copilot/references/divergence-table.md": {
+			"sourceHash": "sha256:8bdbc5b149676019c613d5d83d4d761f31662bac7d8dab42fa817a923b283d23"
+		},
+		"skills/shelling-out-from-plugins/SKILL.md": {
+			"sourceHash": "sha256:be178446cd34c02574d8a73f57b98099a6b3a050ae568dc71d7e769572b42f91"
+		},
+		"skills/skill-authoring/SKILL.md": {
+			"sourceHash": "sha256:94e31d180ee787f06dbc5a2a0afc152a0650678e78a14c744e04832aa2aa30f7"
+		},
+		"skills/skill-evals/SKILL.md": {
+			"sourceHash": "sha256:e8ea8093c18b30ff0d400e73c07765fd13e09814aecf54d40423ccdc6ae2f6c0"
+		},
+		"skills/skill-evals/references/eval-operations.md": {
+			"sourceHash": "sha256:f83efd16ffdd317bd928d49812853e36cad9039f9c1d6aa996a8deeb7b84049f"
+		},
+		"skills/skill-scripts/SKILL.md": {
+			"sourceHash": "sha256:35a1cfd567f44d560b584d3dccda7dc9433073ff1dd029cd29bdd6afaf31f74f"
+		}
+	}
+}

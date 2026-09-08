@@ -74,6 +74,8 @@ importers:
 
   plugins/plugin-bot/claude-code: {}
 
+  plugins/plugin-bot/copilot: {}
+
 packages:
 
   '@alcalzone/ansi-tokenize@0.3.0':
