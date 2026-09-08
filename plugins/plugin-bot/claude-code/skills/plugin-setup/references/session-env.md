@@ -2,7 +2,7 @@
 
 > House doctrine — not an upstream mirror. Platform contracts live in ../anthropic-docs/references/.
 
-How a plugin's SessionStart hook persists path/identity state so later hooks, skill scripts, and Bash-tool subprocesses can recover it — and the four `hooks/lib/*.sh` templates that implement the reader/writer halves of the pattern.
+How a plugin's SessionStart hook persists path/identity state so later hooks, skill scripts, and Bash-tool subprocesses can recover it — and the four `hooks/lib/*.sh` templates that implement the reader/writer halves of the pattern. This is Claude Code doctrine: `$CLAUDE_ENV_FILE` is a Claude Code channel, and Copilot's hook reference documents no equivalent. A `copilot/` workspace that needs the same state must carry it in the envelope or re-resolve it per hook.
 
 ## Why this exists
 
@@ -23,7 +23,9 @@ Every SessionStart hook in this toolchain persists at least the three canonical 
 
 - `<PLUGIN>_PROJECT_DIR` — from `$CLAUDE_PROJECT_DIR` (the user's project root)
 - `<PLUGIN>_DATA_DIR` — from `$CLAUDE_PLUGIN_DATA` (persists across plugin updates)
-- `<PLUGIN>_PLUGIN_ROOT` — from `$CLAUDE_PLUGIN_ROOT` (the currently-active install; useful when a mid-session update rotates the path under `/reload-plugins`)
+- `<PLUGIN>_PLUGIN_ROOT` — from the portable plugin-root chain (the currently-active install; useful when a mid-session update rotates the path under `/reload-plugins`)
+
+The producer is itself a bundled `.sh`, so it reads these as process-environment variables, not as host-substituted tokens: an unset one expands to the empty string. Resolve the root through the chain rather than one bare spelling — `${CLAUDE_PLUGIN_ROOT}` covers Claude Code and Copilot (the Copilot half resting on the VS Code page alone), `${PLUGIN_ROOT}` covers Agent Plugins 1.0 and Copilot, and their intersection is empty. `${CLAUDE_PLUGIN_DATA}` is the better data spelling: Copilot's CLI reference documents it as an alias of `${COPILOT_PLUGIN_DATA}`, though whether that alias is separately exported into a bundled script's subprocess environment is not documented. Full matrix: ../agent-plugins-docs/references/cross-client-behavior.md § Placeholder vocabulary.
 
 Plus whatever plugin-specific identity the plugin owns (`<PLUGIN>_SESSION_ID`, `<PLUGIN>_AGENT_ID`, `<PLUGIN>_GH_TOKEN`, etc.).
 
@@ -46,7 +48,10 @@ hook_env_file="${env_dir}/myplugin-hook.sh"
 {
  printf 'export MYPLUGIN_PROJECT_DIR=%q\n' "$project_dir"
  printf 'export MYPLUGIN_DATA_DIR=%q\n' "${CLAUDE_PLUGIN_DATA:-}"
- printf 'export MYPLUGIN_PLUGIN_ROOT=%q\n' "${CLAUDE_PLUGIN_ROOT:-}"
+ # Two elements, not three: the producer writes MYPLUGIN_PLUGIN_ROOT,
+ # so it cannot also read it as its own fallback.
+ printf 'export MYPLUGIN_PLUGIN_ROOT=%q\n' \
+  "${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-}}"
 } > "$hook_env_file"
 
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then

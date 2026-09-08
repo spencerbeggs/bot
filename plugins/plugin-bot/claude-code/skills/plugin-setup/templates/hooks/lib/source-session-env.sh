@@ -19,6 +19,16 @@
 # The function sources every *hook*.sh file in the per-session dir so
 # multiple plugins coexist without filename coordination — each plugin
 # names its file <plugin>-hook.sh.
+#
+# What the recovered exports are for: <PLUGIN>_PLUGIN_ROOT is the third
+# element of the portable plugin-root chain a hook or skill script
+# resolves —
+#   PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${MYPLUGIN_PLUGIN_ROOT:-}}}"
+# — and it is the only element that survives a subshell inheriting
+# neither host variable. This file is an ordinary bundled .sh: every name
+# above is read from the process environment, so an unset one expands to
+# the empty string. Guard against an empty resolution before joining a
+# path onto it.
 
 source_session_env() {
 	local session_id="${1:-}"
@@ -30,7 +40,7 @@ source_session_env() {
 	# hook envelope (untrusted JSON); reject anything that could escape
 	# the env dir or shell-glob unexpectedly.
 	case "$session_id" in
-		*/*|*..*|''|.|..|*[$'\n\r\t']*) return 0 ;;
+		*/*|*..*|''|.|*[$'\n\r\t']*) return 0 ;;
 	esac
 
 	local env_dir="${HOME}/.claude/session-env/${session_id}"
@@ -60,5 +70,4 @@ source_session_env() {
 # hook script invoked with positional args sourced this file. Callers
 # must invoke the function explicitly:
 #     . "$(dirname "$0")/../lib/source-session-env.sh"
-#     source_session_env "$session_id"
 #     source_session_env "$session_id"

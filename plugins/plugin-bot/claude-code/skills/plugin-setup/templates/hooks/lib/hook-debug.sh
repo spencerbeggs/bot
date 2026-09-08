@@ -6,17 +6,21 @@
 # Provides two functions:
 #   hook_error <hook-name> <message>  — always logs; for failures the
 #                                       maintainer needs to see.
-#   hook_debug <hook-name> <message>  — only logs when VITEST_AGENT_HOOK_DEBUG
-#                                       (or PLUGIN_DEBUG env var) is set;
+#   hook_debug <hook-name> <message>  — only logs when <PREFIX>_HOOK_DEBUG=1;
 #                                       for tracing.
 #
-# The log paths are configurable via env so plugins can colocate logs
-# without colliding with each other:
-#   <PLUGIN>_HOOK_ERROR_LOG  — defaults to /tmp/<plugin>-hook-errors.log
-#   <PLUGIN>_HOOK_DEBUG_LOG  — defaults to /tmp/<plugin>-hook-debug.log
-#   <PLUGIN>_HOOK_DEBUG      — when set to 1, hook_debug actually logs
+# Set HOOK_LOG_PREFIX below to your plugin's short name. <PREFIX> in the
+# variable names below is that value uppercased:
+#   <PREFIX>_HOOK_ERROR_LOG  — full path override. Default:
+#        ${XDG_STATE_HOME:-$HOME/.local/state}/<prefix>/hook-error-log.log
+#   <PREFIX>_HOOK_DEBUG_LOG  — same, ending hook-debug-log.log
+#   <PREFIX>_HOOK_DEBUG      — set to 1 to make hook_debug actually log
 #
-# Customize the variable prefix per plugin by editing the defaults below.
+# All three are read from THIS SCRIPT'S PROCESS ENVIRONMENT. A bundled .sh
+# is never passed through a host substitution pass, so an unset name here
+# expands to the empty string — it does not survive as a literal ${...}.
+# Export them from the plugin's SessionStart producer or the user's shell;
+# writing them as placeholders in hooks.json sets nothing.
 
 # Defaults — change PREFIX to match your plugin namespace.
 # Default is intentionally unmemorable so authors notice and customize.
