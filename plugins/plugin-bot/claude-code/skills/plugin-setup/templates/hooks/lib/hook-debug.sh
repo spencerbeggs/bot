@@ -10,7 +10,10 @@
 #                                       for tracing.
 #
 # Set HOOK_LOG_PREFIX below to your plugin's short name. <PREFIX> in the
-# variable names below is that value uppercased:
+# variable names below is that value uppercased with every character that
+# cannot appear in a shell identifier replaced by an underscore — so a
+# prefix of `plugin-bot` is overridden by PLUGIN_BOT_HOOK_ERROR_LOG, not
+# PLUGIN-BOT_HOOK_ERROR_LOG. The log DIRECTORY keeps the original spelling.
 #   <PREFIX>_HOOK_ERROR_LOG  — full path override. Default:
 #        ${XDG_STATE_HOME:-$HOME/.local/state}/<prefix>/hook-error-log.log
 #   <PREFIX>_HOOK_DEBUG_LOG  — same, ending hook-debug-log.log
@@ -32,6 +35,24 @@ _to_upper() {
 	printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
 }
 
+# Build a legal shell identifier from a prefix + suffix. The uppercase form
+# alone is NOT safe to feed to `${!name}`: a hyphenated prefix such as
+# `plugin-bot` yields PLUGIN-BOT_HOOK_ERROR_LOG, and Bash 4+ aborts the
+# function with "invalid variable name". Bash 3.2 silently yields empty
+# instead, so this fails on Linux/CI and passes on stock macOS. Map every
+# non-alphanumeric to `_`, and refuse a name that still cannot be one.
+_to_var_name() {
+	printf '%s' "$1" | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9' '_'
+}
+
+_is_var_name() {
+	case "$1" in
+		[A-Z_]*[!A-Z0-9_]*) return 1 ;;
+		[A-Z_]*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 _default_log_dir() {
 	echo "${XDG_STATE_HOME:-$HOME/.local/state}/${HOOK_LOG_PREFIX}"
 }
@@ -39,8 +60,11 @@ _default_log_dir() {
 _resolve_log_path() {
 	local suffix="$1"
 	local override_var
-	override_var="$(_to_upper "$HOOK_LOG_PREFIX")_$(_to_upper "$suffix")"
-	local override_val="${!override_var:-}"
+	override_var="$(_to_var_name "${HOOK_LOG_PREFIX}_${suffix}")"
+	local override_val=""
+	if _is_var_name "$override_var"; then
+		override_val="${!override_var:-}"
+	fi
 	if [ -n "$override_val" ]; then
 		echo "$override_val"
 		return
@@ -53,7 +77,8 @@ _resolve_log_path() {
 
 _is_debug_on() {
 	local override_var
-	override_var="$(_to_upper "$HOOK_LOG_PREFIX")_HOOK_DEBUG"
+	override_var="$(_to_var_name "${HOOK_LOG_PREFIX}_HOOK_DEBUG")"
+	_is_var_name "$override_var" || return 1
 	[ "${!override_var:-0}" = "1" ]
 }
 

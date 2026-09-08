@@ -4,8 +4,14 @@
 #   . "$(dirname "$0")/../lib/hook-output.sh"
 #
 # Provides functions that print the documented JSON response shapes to stdout
-# without ad-hoc string concatenation. Each function exits with 0 — the host
-# treats the JSON as the decision signal.
+# without ad-hoc string concatenation. On the happy path each returns 0 and
+# the host treats the printed JSON as the decision signal.
+#
+# NOT unconditionally 0: every emitter except emit_noop shells out to jq, so
+# with jq absent they return jq's non-zero status and print nothing. Under
+# `set -e` that exits the hook non-zero, which is the opposite of the
+# fail-open rule hook scripts owe the user. Check for jq up front and take
+# the emit_noop path yourself; do not assume these cannot fail.
 
 # Preflight: jq is required for every emitter except emit_noop. Warn loudly
 # rather than letting hooks silently produce empty stdout when jq is missing.

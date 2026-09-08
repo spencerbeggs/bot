@@ -6,6 +6,9 @@
 # Provides:
 #   _gh <args...>       — invokes gh with namespaced-token translation and
 #                         pager disabled. Use instead of bare `gh`.
+#   _gh_auth_ok         — returns 0 when `gh auth status` succeeds under the
+#                         same resolved env _gh would use. See its own
+#                         comment below for why that matters.
 #
 # Why: the user's shell may have a stale GH_TOKEN, GITHUB_TOKEN, or
 # GH_PAGER set from an earlier login, CI workflow, or shell rc file.
