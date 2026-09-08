@@ -63,6 +63,8 @@ need_value() {
 	case "$3" in
 		-*) die "$1 requires a value (a path) but got the flag '$3'. Run with --help for usage." ;;
 	esac
+	[ -n "$3" ] || die "$1 was given an empty value; it requires a path. Run with --help for usage."
+
 }
 
 # Reject a repeated option rather than letting the last one silently win.
@@ -102,19 +104,26 @@ if [ "$MODE" = "check" ] && [ "$DRYRUN" -eq 1 ]; then
 	die "--dry-run applies to --record only; --check never writes."
 fi
 command -v jq >/dev/null 2>&1 || die "jq is required but was not found on PATH."
-if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
+if command -v sha256sum >/dev/null 2>&1; then
+	hash_raw() { sha256sum -- "$1"; }
+elif command -v shasum >/dev/null 2>&1; then
+	hash_raw() { shasum -a 256 -- "$1"; }
+else
 	die "one of sha256sum or shasum is required but neither was found on PATH."
 fi
 
 TMPDIR_RUN="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR_RUN"' EXIT
 
+# A drift detector must never mistake "could not read" for "unchanged", so an
+# unhashable file is an environment error (exit 2), not a clean entry. A command
+# substitution can also succeed while producing nothing, hence the second guard.
 hash_of() {
-	if command -v sha256sum >/dev/null 2>&1; then
-		printf 'sha256:%s' "$(sha256sum "$1" | awk '{print $1}')"
-	else
-		printf 'sha256:%s' "$(shasum -a 256 "$1" | awk '{print $1}')"
-	fi
+	local raw=""
+	raw="$(hash_raw "$1")" || die "cannot hash file (is it readable?): $1"
+	raw="${raw%% *}"
+	[ -n "$raw" ] || die "hashing produced an empty digest for file: $1"
+	printf 'sha256:%s' "$raw"
 }
 
 # agents/<name>.md is agents/<name>.agent.md in the port; everything else maps
