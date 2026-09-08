@@ -121,10 +121,10 @@ run_set() {
 		# there is no bareword "expected"/"exp" for a shell or awk builtin to
 		# shadow.
 		if [ "$DRYRUN" -eq 1 ]; then
-			jq -n --arg query "$query" --argjson expected "$expected" --argjson runs "$total" \
+			jq -nc --arg query "$query" --argjson expected "$expected" --argjson runs "$total" \
 				'{query: $query, expected: $expected, runs: $runs, dry_run: true}'
 		else
-			jq -n --arg query "$query" --argjson expected "$expected" \
+			jq -nc --arg query "$query" --argjson expected "$expected" \
 				--argjson triggered "$triggered" --argjson runs "$total" \
 				'{query: $query, expected: $expected, triggered: $triggered, runs: $runs,
 				  rate: (($triggered / $runs * 100 | round) / 100)}'
