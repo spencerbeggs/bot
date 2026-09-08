@@ -13,7 +13,8 @@
 			"source": {
 				"path": "plugins/plugin-bot/claude-code",
 				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/bot.git"
+				"url": "https://github.com/spencerbeggs/bot.git",
+        "sha": "a18f0a58fb292217151f60877493b018817b8eb2"
 			}
 		},
 		{
