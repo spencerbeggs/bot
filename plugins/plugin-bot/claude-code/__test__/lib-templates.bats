@@ -112,7 +112,7 @@ in_bash() {
 				echo "${binary} prefix='${prefix}': no log at ${log}"
 				return 1
 			}
-			grep -q "probe-hook: smoke message" "$log" || {
+			grep -q "probe-hook: smoke message" "$log" 2> /dev/null || {
 				echo "${binary} prefix='${prefix}': log written but message missing"
 				cat "$log"
 				return 1
@@ -124,7 +124,7 @@ in_bash() {
 				"${upper}_HOOK_ERROR_LOG=${state}/custom.log" \
 				-- "${LIB}/hook-debug.sh"
 			[ "$status" -eq 0 ]
-			grep -q "override message" "${state}/custom.log" || {
+			grep -q "override message" "${state}/custom.log" 2> /dev/null || {
 				echo "${binary} prefix='${prefix}': ${upper}_HOOK_ERROR_LOG ignored"
 				return 1
 			}
@@ -194,7 +194,17 @@ in_bash() {
 	while IFS= read -r binary; do
 		run in_bash "$binary" 'set -eu; . "$1"; emit_noop' -- "${LIB}/hook-output.sh"
 		[ "$status" -eq 0 ]
-		[ "${lines[-1]}" = "{}" ]
+		# Not `${lines[-1]}`: a negative subscript needs bash 4.2+ in the BATS
+		# host, and on empty output it aborts with "bad array subscript" — a
+		# raw bash error in place of the diagnostic whoever trips this needs.
+		[ "${#lines[@]}" -gt 0 ] || {
+			echo "${binary}: emit_noop printed nothing; expected {}"
+			return 1
+		}
+		[ "${lines[$((${#lines[@]} - 1))]}" = "{}" ] || {
+			echo "${binary}: emit_noop printed '${output}'; expected {}"
+			return 1
+		}
 
 		run in_bash "$binary" 'set -eu; . "$1"; emit_allow' -- "${LIB}/hook-output.sh"
 		[ "$status" -eq 0 ]

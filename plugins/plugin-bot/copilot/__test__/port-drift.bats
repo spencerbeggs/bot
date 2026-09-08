@@ -24,58 +24,116 @@ setup() {
 }
 
 # Emits the YAML frontmatter block of $1, exclusive of both `---` fences.
-# Empty when the file opens with anything other than a fence.
+# A leading UTF-8 BOM is stripped before the fence is matched: without that, a
+# BOM would make line 1 unequal to `---` and silently exempt the whole file
+# from every frontmatter assertion below. Emits nothing when the file genuinely
+# has no frontmatter — callers must treat that as a failure, not as a pass.
 frontmatter() {
-	awk 'NR == 1 && $0 == "---" { inside = 1; next }
+	awk 'NR == 1 { sub(/^\xef\xbb\xbf/, "") }
+	     NR == 1 && $0 == "---" { inside = 1; next }
 	     inside && $0 == "---" { exit }
 	     inside { print }' "$1"
 }
 
+# Emits one path per ported component file carrying YAML frontmatter.
+ported_components() {
+	ls "${PORT_DIR}"/skills/*/SKILL.md "${PORT_DIR}"/agents/*.agent.md 2> /dev/null
+}
+
 # --- portness -------------------------------------------------------------
 
-@test "no Claude-only frontmatter key survives in a ported skill" {
+@test "no Claude-only frontmatter key survives in a ported component" {
 	# paths:, user-invocable: and disable-model-invocation: are Claude Code
 	# skill fields with no Copilot equivalent. All three also appear legitimately
 	# in port bodies — inside quoted doc-mirror tables and in prose teaching what
 	# Claude Code does — so a substring grep over the file would fire on correct
 	# content. The claim is about frontmatter KEYS, and only frontmatter is read.
+	#
+	# Agents are swept too, not just skills: `paths:` and
+	# `disable-model-invocation:` are wrong in agent frontmatter on BOTH hosts,
+	# and agent-authoring says so, so the port has no excuse for either.
 	found=0
-	for skill in "${PORT_DIR}"/skills/*/SKILL.md; do
-		[ -f "$skill" ] || continue
+	while IFS= read -r component; do
+		[ -f "$component" ] || continue
 		found=$((found + 1))
-		if frontmatter "$skill" |
+		fm="$(frontmatter "$component")"
+		# No frontmatter at all is a failure, never an exemption: every
+		# assertion in this test is a claim about a block that must exist.
+		[ -n "$fm" ] || {
+			echo "${component}: no YAML frontmatter block found"
+			echo "   Every ported component must open with a --- fence on line 1."
+			return 1
+		}
+		if printf '%s\n' "$fm" |
 			grep -nE '^[[:space:]]*(paths|user-invocable|disable-model-invocation)[[:space:]]*:'; then
-			echo "^^ ${skill}: Claude-only key in frontmatter"
+			echo "^^ ${component}: Claude-only key in frontmatter"
 			echo "   fix: drop the key and absorb its trigger into description:"
 			return 1
 		fi
-	done
+	done < <(ported_components)
 	[ "$found" -gt 0 ] || {
-		echo "no ported SKILL.md files found — test would pass vacuously"
+		echo "no ported components found — test would pass vacuously"
 		return 1
 	}
 }
 
 @test "no live \${CLAUDE_PLUGIN_ROOT}/skills/<real-skill>/ pointer survives in the port" {
 	# Task 16 rewrote 64 of these and left 62 placeholders verbatim; nothing
-	# guards the rewrites. The discriminator is shape, not path: a pointer is
-	# LIVE when the segment after skills/ names a directory that actually exists
-	# under the source workspace. `<name>` — the taught-pattern placeholder in
-	# skill-scripts — names no such directory and is left alone by construction,
-	# so no allowlist is needed and none is kept.
+	# guards the rewrites. Copilot substitutes no token in skill content, so a
+	# surviving pointer renders literally and the instruction silently dies.
+	#
+	# Two conditions make a pointer a violation, and both are shape, not path:
+	#
+	#   1. The segment after skills/ names a directory that actually exists
+	#      under the source workspace — `<name>`, the taught-pattern
+	#      placeholder in skill-scripts, names none and is left alone by
+	#      construction. No allowlist is needed and none is kept.
+	#   2. The LINE carries no explicit "Claude Code" host label. porting-to-
+	#      copilot's whole job is to EXHIBIT Claude spellings, so a doc-mirror
+	#      row quoting a real skill name is correct content, and firing on it
+	#      is the cries-wolf failure this suite avoids elsewhere by asserting
+	#      on keys rather than substrings. A label is the house convention for
+	#      such an exhibit and is what the one live occurrence already carries.
+	#
+	# The label was chosen over scoping the sweep past fenced examples because
+	# the occurrence that exists today sits in inline backticks inside a prose
+	# paragraph, not a fence — fence-scoping would not have seen it at all.
+	# Note the sweep must therefore read WHOLE LINES (grep -n, no -o): the
+	# label lives in the prose around the pointer, never inside the match.
 	while IFS= read -r hit; do
 		[ -n "$hit" ] || continue
 		file="${hit%%:*}"
-		match="${hit#*:}"
-		name="${match#*skills/}"
-		name="${name%%/*}"
-		if [ -d "${SOURCE_DIR}/skills/${name}" ]; then
-			echo "${file}: live Claude pointer into real skill '${name}'"
+		rest="${hit#*:}"
+		lineno="${rest%%:*}"
+		text="${rest#*:}"
+		# One line may carry several pointers; check each.
+		while IFS= read -r ptr; do
+			[ -n "$ptr" ] || continue
+			name="${ptr#*/skills/}"
+			name="${name%%/*}"
+			[ -d "${SOURCE_DIR}/skills/${name}" ] || continue
+			case "$text" in *"Claude Code"*) continue ;; esac
+			echo "${file}:${lineno}: live Claude pointer into real skill '${name}'"
 			echo "   Copilot substitutes no token in skill content; it renders literally."
-			echo "   fix: write the path the reader resolves themselves."
+			echo "   fix: write the path the reader resolves themselves, or — if this"
+			echo "        is a deliberate exhibit — label the host on the same line."
 			return 1
-		fi
-	done < <(grep -ro '\${CLAUDE_PLUGIN_ROOT}/skills/[^/]*/' "$PORT_DIR" || true)
+		done < <(printf '%s\n' "$text" |
+			grep -o '\${CLAUDE_PLUGIN_ROOT}/skills/[^/]*/' || true)
+	done < <(grep -rn --exclude-dir=__test__ \
+		'\${CLAUDE_PLUGIN_ROOT}/skills/' "$PORT_DIR" || true)
+
+	# Non-vacuity: prove the sweep actually reached the corpus. Without this a
+	# wrong PORT_DIR, a broken pattern, or a future grep change passes silently
+	# — the exact failure this plan has now shipped twice. __test__ is excluded
+	# from both the sweep and the count so the test never inspects itself.
+	swept="$(grep -rl --exclude-dir=__test__ 'CLAUDE_PLUGIN_ROOT' "$PORT_DIR" | wc -l | tr -d ' ')"
+	[ "$swept" -gt 0 ] || {
+		echo "no ported file mentions CLAUDE_PLUGIN_ROOT — the sweep found no corpus"
+		echo "   Either PORT_DIR is wrong or the port lost every pointer at once."
+		return 1
+	}
+	echo "swept ${swept} ported files mentioning CLAUDE_PLUGIN_ROOT"
 }
 
 @test "the ported agent carries no tools: key, and still explains why" {
@@ -112,6 +170,13 @@ frontmatter() {
 			checked=$((checked + 1))
 			find "$there" -maxdepth 2 -type f -name "$base" | grep -q . && continue
 			# A missing sibling is legal only when the ledger says so, with a reason.
+			# NOTE the asymmetry: the ledger's only excuse key is `claudeOnly`,
+			# because the ledger is keyed by SOURCE-relative path and its source
+			# is always claude-code. Excusing a Copilot-only file therefore means
+			# recording it as `claudeOnly` too, which reads backwards. Renaming
+			# the key is a port-status.sh change and out of scope here; this
+			# comment is the mitigation. Whoever adds the first such file should
+			# reconsider the key name rather than work around it.
 			rel="${hit#"${here}"/}"
 			excused="$(jq -r --arg k "$rel" '
 				(.entries[$k] // {})
