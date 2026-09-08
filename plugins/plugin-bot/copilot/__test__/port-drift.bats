@@ -81,14 +81,19 @@ ported_components() {
 @test "every ported component's frontmatter carries only name and description" {
 	# This is an ALLOWLIST, and it replaced a denylist of the three Claude-only
 	# keys the port was warned about (paths, user-invocable,
-	# disable-model-invocation). The inversion is strictly stronger AND shorter:
-	# the union of frontmatter keys across every ported component is exactly
-	# {name, description} — two permitted keys against three forbidden ones — so
-	# enumerating what is banned was always the longer list and could only ever
-	# catch leaks somebody had already thought of. argument-hint:,
-	# allowed-tools:, model: and whatever Copilot documents next all fail here
-	# for free, including the fourth leak nobody has thought of, which is the
-	# characteristic failure of an enumeration.
+	# disable-model-invocation). The inversion is strictly stronger, and its
+	# ALLOWLIST is shorter than the denylist it replaced — the union of
+	# frontmatter keys across every ported component is exactly
+	# {name, description}, two permitted keys against three forbidden ones — but
+	# it cost a LONGER TEST BODY: extracting column-0 keys and looping is more
+	# machinery than one alternation grep (measured: 23 non-comment lines before,
+	# 31 after). The trade is worth it and is not free.
+	#
+	# What it buys: enumerating what is banned could only ever catch leaks
+	# somebody had already thought of, and the characteristic failure of an
+	# enumeration is the entry nobody thought of. argument-hint:, allowed-tools:,
+	# model:, license: and whatever Copilot documents next all fail here without
+	# an edit.
 	#
 	# It carries no cry-wolf risk for the same reason the denylist did not: only
 	# the frontmatter block is read, so the ~25 legitimate appearances of these
