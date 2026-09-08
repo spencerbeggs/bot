@@ -38,6 +38,18 @@
 # these skills exist partly to DOCUMENT Claude Code — which is precisely why
 # no generalised token assertion over them can work. A future maintainer who
 # wants one needs a discriminator first, not a broader grep.
+#
+# KNOWN, DELIBERATE WEAKENING — the pointer test's host-label exemption:
+#
+#   The ${CLAUDE_PLUGIN_ROOT}/skills/ test below excuses any line carrying a
+#   "Claude Code" host label. That is a real hole, not an oversight: a genuinely
+#   missed conversion sitting on a line that happens to say "Claude Code" now
+#   passes. It was taken knowingly, because porting-to-copilot's whole purpose
+#   is to EXHIBIT Claude spellings, so without the exemption the test goes red
+#   on correct content the first time a doc-mirror row quotes a real skill name
+#   — and a suite that cries wolf gets deleted, and a deleted suite protects
+#   nothing. Cries-wolf is the worse failure here. Anyone tightening this needs
+#   a better discriminator, not a removed exemption.
 
 setup() {
 	PORT_DIR="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
