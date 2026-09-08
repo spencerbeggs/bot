@@ -509,13 +509,23 @@ A plugin with a `SKILL.md` at its root, no `skills/` subdirectory, and no `skill
 
 ## Environment variables
 
-Three variables for referencing paths. All are substituted inline anywhere they appear in skill content, agent content, hook commands, monitor commands, and MCP/LSP server configs. All are also exported as environment variables to hook processes and MCP/LSP server subprocesses.
+Three variables for referencing paths. All three are exported as environment variables to hook processes and to MCP and LSP server subprocesses. Which fields substitute them **inline** depends on the plugin component — see the availability table below, which is per-component and not uniform: skill/agent content and hook/monitor commands substitute anywhere the placeholder appears, while the server configs substitute in a named field list only.
 
 | Variable | Meaning | Stability contract |
 | :--- | :--- | :--- |
 | `${CLAUDE_PLUGIN_ROOT}` | Absolute path to the plugin's installation directory. Use for scripts, binaries, config bundled with the plugin | Changes when the plugin updates. Previous version's directory remains on disk ~7 days post-update before cleanup — treat as ephemeral, do not write state here. When a plugin updates mid-session, hook commands, monitors, MCP servers, and LSP servers keep using the previous version's path until `/reload-plugins` (switches hooks/MCP/LSP to new path) or, for monitors, a session restart |
 | `${CLAUDE_PLUGIN_DATA}` | Persistent directory for plugin state that survives updates. Use for installed deps (`node_modules`, Python venvs), generated code, caches | Created automatically the first time this variable is referenced |
 | `${CLAUDE_PROJECT_DIR}` | The project root — same directory hooks receive as `CLAUDE_PROJECT_DIR`. Use for project-local scripts/config | Wrap in quotes for paths with spaces, e.g. `"${CLAUDE_PROJECT_DIR}/scripts/server.sh"` |
+
+**Substitution availability by component** — which fields resolve a placeholder inline:
+
+| Plugin component | Fields where placeholders resolve |
+| :--- | :--- |
+| Skill and agent content | Anywhere the placeholder appears |
+| Hook and monitor commands | Anywhere the placeholder appears |
+| MCP `stdio` servers | `command`, `args`, `env` |
+| MCP `http`, `sse`, `ws` servers | `url`, `headers`, `headersHelper` |
+| LSP servers | `command`, `args`, `env`, `workspaceFolder` |
 
 In hook commands, use exec form with `args` so `${CLAUDE_PLUGIN_ROOT}` is passed as one argument with no quoting. In shell-form hooks and monitor commands, wrap it in double quotes: `"${CLAUDE_PLUGIN_ROOT}"`.
 

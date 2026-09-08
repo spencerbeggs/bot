@@ -33,10 +33,18 @@ then port it.
    if you want to see which entries would change before writing.
 6. Run the bats suite.
 
-**What the ledger covers.** `skills/**/*.md` and `agents/**/*.md`, and nothing
-else. `plugin.json`, `hooks.json` and `.mcp.json` are ported but their currency
-is **not** tracked — after changing one in the source, check its counterpart by
-hand; `--check` will stay green.
+**A green `--check` means "every ported skill and agent is current", not "the
+port is complete."** The ledger covers `skills/**/*.md` and `agents/**/*.md`,
+and nothing else. It does not see `plugin.json`, `hooks.json` or `.mcp.json`,
+and that scope is deliberate, not a gap to widen: a Claude `plugin.json` and a
+Copilot `plugin.json` are different schemas with different fields, so a content
+hash between them would be permanent false drift, and the only way to silence
+it would be to stop checking. What covers the **manifest** instead is
+`plugins/__test__/canonical-layout.bats`, which pins its existence and location
+per host — `.claude-plugin/plugin.json` for Claude Code, root `plugin.json` for
+Copilot. `hooks.json` and `.mcp.json` are covered by neither the ledger nor that
+suite today, so after changing one in the source, port it and verify it by hand;
+`--check` stays green either way.
 
 ## Deciding `claudeOnly`
 
@@ -84,7 +92,7 @@ the two ever disagree — `agent-authoring` § What does not port.
 | :-- | :-- | :-- |
 | `userConfig` | No documented equivalent | **Action**: drop the block and replace every `${user_config.*}` reference with a plain `${ENV_VAR}` the handler reads, documented in the port's README. A left-behind `${user_config.*}` token has nothing to expand it. |
 | `channels`, `dependencies`, `workflows`, output styles, monitors, themes | No documented equivalent | **Action**: omit the manifest keys and do not create the directories. Where one carried behavior a user depends on, re-express it as a **skill** under `skills/` — the one component both hosts read the same way. Where that is not possible, it is a real capability loss: record it in the port's README rather than leaving the reader to infer it from an absence. |
-| `${CLAUDE_PLUGIN_ROOT}` inside SKILL.md **body prose** | Neither side's substitution table lists `${CLAUDE_PLUGIN_ROOT}` as expanding in SKILL.md body content — Claude Code's skill-content table does not carry the token at all, and Copilot's CLI reference substitution table has exactly three rows and this is not one | So every such cross-reference may render **literally** in a ported skill. **Action**: for a file inside the same skill, write a plain relative path (`references/divergence-table.md`). For a file in a sibling skill, name the skill and the file in prose — "the `anthropic-docs` skill's `references/plugins-reference.md`" — because a `../` chain violates the one-level-deep file-reference rule in `skill-authoring`. Expect several per skill: `plugin-manifest/SKILL.md` alone carries seven, all in its closing reference list. |
+| `${CLAUDE_PLUGIN_ROOT}` inside SKILL.md **body prose** | Claude Code documents it: `plugins-reference.md` § Environment variables gives `Skill and agent content` as substituting **anywhere the placeholder appears**. Copilot documents no such thing — its CLI reference substitution table has exactly three rows and this is not one | So every such cross-reference, live in the source, may render **literally** in a ported skill. **Action**: for a file inside the same skill, write a plain relative path (`references/divergence-table.md`). For a file in a sibling skill, name the skill and the file in prose — "the `anthropic-docs` skill's `references/plugins-reference.md`" — because a `../` chain violates the one-level-deep file-reference rule in `skill-authoring`. Expect several per skill: `plugin-manifest/SKILL.md` alone carries seven, all in its closing reference list. |
 
 ## Available scripts
 
@@ -135,7 +143,8 @@ everything else maps one-to-one.
 - Rewriting `${CLAUDE_PLUGIN_DATA}` or moving `.claude-plugin/plugin.json` in a
   Copilot tree — both are `No` rows in the divergence table.
 - Changing `plugin.json`, `hooks.json` or `.mcp.json` in the source and trusting
-  a green `--check`; the ledger does not track them.
+  a green `--check`; the ledger does not see them, and `canonical-layout.bats`
+  covers only the manifest.
 
 ## Read for the full contract
 
