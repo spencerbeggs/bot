@@ -39,13 +39,14 @@ This is not a hook script — no JSON envelope on stdin, no JSON response on std
 
 ## Agentic script-interface rules
 
-These decide whether an agent can use the script at all — not whether it runs, but whether an agent driving it non-interactively can succeed. Source: `${CLAUDE_PLUGIN_ROOT}/skills/agent-plugins-docs/references/skill-authoring-guidance.md` § Script design for agentic use.
+These decide whether an agent can use the script at all — not whether it runs, but whether an agent driving it non-interactively can succeed. The roster below is the full list from the source; if it and the source ever disagree on count, the source wins. Source: `${CLAUDE_PLUGIN_ROOT}/skills/agent-plugins-docs/references/skill-authoring-guidance.md` § Script design for agentic use.
 
 - **Never block on interactive input.** Agents run in non-interactive shells; a TTY prompt hangs forever. Accept input via flags, env vars or stdin, and fail with a message naming the missing flag and its options.
 - **`--help` is the interface documentation** an agent reads. Brief description, flags, examples. Keep it short — it enters the context window.
 - **Structured stdout, diagnostics on stderr.** JSON/CSV/TSV over whitespace-aligned text, so the agent and `jq` can both consume it.
 - **Errors say what was expected**, not just that something failed.
 - **Idempotency** — agents retry. "Create if not exists" over "create and fail".
+- **Constrain input.** Reject ambiguous input with a clear error rather than guessing; use enums and closed sets over free text.
 - **Distinct, documented exit codes** per failure class.
 - **`--dry-run`** for destructive or stateful operations.
 - **Predictable output size** — many harnesses truncate beyond 10–30K characters. Default to a summary, support `--offset`, or require an explicit `--output`.
@@ -57,7 +58,8 @@ These decide whether an agent can use the script at all — not whether it runs,
 - Trusting a bare `${CLAUDE_PLUGIN_ROOT}` or a bare `${PLUGIN_ROOT}` in a script meant to run on more than one host — resolve the chain.
 - Writing a cache/log file next to the script itself instead of under `${CLAUDE_PLUGIN_DATA}`.
 - Hard-coding `~/.claude/plugins/data/<id>/` instead of `${CLAUDE_PLUGIN_DATA}` — the `<id>` form is implementation-defined and shouldn't be reconstructed by hand.
-- `${PLUGIN_DATA}` in a script meant to run under Copilot — expands to nothing there; use `${CLAUDE_PLUGIN_DATA}`.
+- `${PLUGIN_DATA}` in a script meant to run under Copilot — yields a literal, unexpanded `${PLUGIN_DATA}` string there (not an empty value an empty-check would catch); use `${CLAUDE_PLUGIN_DATA}`.
+- Writing `${COPILOT_PLUGIN_ROOT}` — defined by nothing, expands to nothing, and the script fails silently rather than erroring. This does **not** generalize to the `COPILOT_*` prefix: `${COPILOT_PLUGIN_DATA}` is real and documented.
 - `cmd || true` followed by a `$?` check — dead code, `true` always succeeds; capture with `out=$(cmd 2>&1) || rc=$?`.
 - A script that prompts for confirmation with no flag to skip it — an agent cannot answer the prompt and the invocation hangs.
 - No `--help`, or a `--help` that dumps the whole man page — either leaves the agent guessing at the interface.
