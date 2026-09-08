@@ -14,6 +14,30 @@
 #
 # Bodies diverge per host by design, so identity is the wrong contract for
 # either question.
+#
+# THE RULE THAT KEEPS THIS SUITE ALIVE, and the reason it is short:
+#
+#   Assert on structure you control — frontmatter keys, and an allowlist over
+#   a denylist wherever the permitted set is enumerable. Assert on tokens in
+#   prose ONLY where a shape discriminator exists to separate a live
+#   instruction from a documented example. Everything else is a GAP, and an
+#   honest gap register beats a test that cries wolf.
+#
+# GAP REGISTER — considered, consciously left untested, not oversights:
+#
+#   ${CLAUDE_SKILL_DIR}    (7 occurrences)  Same class as the /skills/ pointer
+#                          test below, but with NO shape discriminator: it has
+#                          no path segment to check against a real directory,
+#                          so nothing separates a live use from an exhibit.
+#   ${CLAUDE_PLUGIN_DATA}  (40)
+#   ${CLAUDE_PROJECT_DIR}  (37)
+#   $CLAUDE_ENV_FILE       (34)
+#   plus assorted singletons.
+#
+# The great majority of these are certainly legitimate doc-mirror content —
+# these skills exist partly to DOCUMENT Claude Code — which is precisely why
+# no generalised token assertion over them can work. A future maintainer who
+# wants one needs a discriminator first, not a broader grep.
 
 setup() {
 	PORT_DIR="$(cd "${BATS_TEST_DIRNAME}/.." && pwd)"
@@ -42,16 +66,29 @@ ported_components() {
 
 # --- portness -------------------------------------------------------------
 
-@test "no Claude-only frontmatter key survives in a ported component" {
-	# paths:, user-invocable: and disable-model-invocation: are Claude Code
-	# skill fields with no Copilot equivalent. All three also appear legitimately
-	# in port bodies — inside quoted doc-mirror tables and in prose teaching what
-	# Claude Code does — so a substring grep over the file would fire on correct
-	# content. The claim is about frontmatter KEYS, and only frontmatter is read.
+@test "every ported component's frontmatter carries only name and description" {
+	# This is an ALLOWLIST, and it replaced a denylist of the three Claude-only
+	# keys the port was warned about (paths, user-invocable,
+	# disable-model-invocation). The inversion is strictly stronger AND shorter:
+	# the union of frontmatter keys across every ported component is exactly
+	# {name, description} — two permitted keys against three forbidden ones — so
+	# enumerating what is banned was always the longer list and could only ever
+	# catch leaks somebody had already thought of. argument-hint:,
+	# allowed-tools:, model: and whatever Copilot documents next all fail here
+	# for free, including the fourth leak nobody has thought of, which is the
+	# characteristic failure of an enumeration.
 	#
-	# Agents are swept too, not just skills: `paths:` and
-	# `disable-model-invocation:` are wrong in agent frontmatter on BOTH hosts,
-	# and agent-authoring says so, so the port has no excuse for either.
+	# It carries no cry-wolf risk for the same reason the denylist did not: only
+	# the frontmatter block is read, so the ~25 legitimate appearances of these
+	# strings in port prose and doc-mirror tables stay invisible.
+	#
+	# Scope is SKILL.md and agent files ONLY. Do NOT widen it to references/ —
+	# `allowed-tools:` and `model:` appear there as quoted spec text
+	# (agent-skills-spec.md:84, plugins-reference.md:57) and widening turns a
+	# clean assertion into exactly the cries-wolf case it avoids.
+	#
+	# When Copilot documents a third key, add one line below. That edit is a
+	# decision worth forcing, not one a test should wave through.
 	found=0
 	while IFS= read -r component; do
 		[ -f "$component" ] || continue
@@ -64,12 +101,22 @@ ported_components() {
 			echo "   Every ported component must open with a --- fence on line 1."
 			return 1
 		}
-		if printf '%s\n' "$fm" |
-			grep -nE '^[[:space:]]*(paths|user-invocable|disable-model-invocation)[[:space:]]*:'; then
-			echo "^^ ${component}: Claude-only key in frontmatter"
-			echo "   fix: drop the key and absorb its trigger into description:"
-			return 1
-		fi
+		# Only column-0 keys are top-level; a folded description's continuation
+		# lines are indented and must not be read as keys.
+		while IFS= read -r key; do
+			[ -n "$key" ] || continue
+			case "${key%:}" in
+				name | description) ;;
+				*)
+					echo "${component}: frontmatter key '${key%:}' is not permitted"
+					echo "   Copilot documents only name: and description:."
+					echo "   fix: drop the key and absorb what it did into description:,"
+					echo "        or — if Copilot now documents it — add it to the"
+					echo "        allowlist in this test, deliberately."
+					return 1
+					;;
+			esac
+		done < <(printf '%s\n' "$fm" | grep -oE '^[A-Za-z_][A-Za-z0-9_-]*:' || true)
 	done < <(ported_components)
 	[ "$found" -gt 0 ] || {
 		echo "no ported components found — test would pass vacuously"
@@ -139,6 +186,12 @@ ported_components() {
 @test "the ported agent carries no tools: key, and still explains why" {
 	agent="${PORT_DIR}/agents/plugin-engineer.agent.md"
 	[ -f "$agent" ]
+	# The key half of this claim is now also covered by the allowlist in test 1,
+	# which would reject `tools:` like any other unpermitted key. Kept anyway:
+	# this test's unique contribution is the SECOND assertion, and the pair
+	# reads as one decision. If test 1's allowlist ever gains `tools`, this is
+	# the test that must still fail.
+	#
 	# The absence is deliberate: neither candidate identifier set is schema-backed.
 	if frontmatter "$agent" | grep -nE '^[[:space:]]*tools[[:space:]]*:'; then
 		echo "^^ ${agent}: tools: key present"
