@@ -60,7 +60,7 @@ Swap `--check` for `--record` once the port is re-authored, to pin the new hashe
 
 ## Local development loop
 
-- `pnpm claude` loads both plugins from source (`--plugin-dir ./plugins/plugin-bot/claude-code --plugin-dir ./plugins/dogfood/claude-code`), shadowing any same-named marketplace install for that session. This is the only loop that serves local edits: the `.claude-plugin/marketplace.json` entry is a `git-subdir` source pinned to a GitHub sha, so it never reflects the working tree.
+- `pnpm claude` loads both plugins from source (`--plugin-dir ./plugins/plugin-bot/claude-code --plugin-dir ./plugins/dogfood/claude-code`), shadowing any same-named marketplace install for that session. This is the only loop that serves local edits: the `.claude-plugin/marketplace.json` entry is a `git-subdir` source that always resolves from GitHub, so it never reflects the working tree.
 - After editing hooks, `.mcp.json` or agents, have the user run `/reload-plugins`. `SKILL.md` text is documented to take effect immediately, but that statement is scoped to `@skills-dir` plugins rather than `--plugin-dir` loads — so reload anyway if a skill edit does not seem to land.
 - `claude plugin validate <target-workspace> --strict` before calling Claude Code plugin work done. Copilot documents no validate subcommand; `copilot plugin install ./<workspace>` caches components, so reinstall after each edit.
 - A CLAUDE.md at a plugin's own root is NOT loaded as plugin context — plugins ship context via skills. That is why this guidance lives at the `plugins/` level.
