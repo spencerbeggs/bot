@@ -306,7 +306,10 @@ ported_components() {
 # per host by design, which is why the ledger hashes only the source side). It
 # is the RIGHT contract here: these files are host-agnostic code and data,
 # copied rather than re-authored, so any difference between the two copies is
-# drift by definition.
+# drift by definition. `__test__` is swept too, because the monitor-template
+# test lives at the workspace root (vitest collects nowhere else) — but .bats
+# files there are EXCLUDED: each target's suite is written for that target and
+# is meant to differ.
 @test "every non-Markdown file is byte-identical across the two targets" {
 	found=0
 	drift=0
@@ -321,7 +324,8 @@ ported_components() {
 			echo "differs between targets: ${rel}"
 			drift=$((drift + 1))
 		fi
-	done < <(cd "$SOURCE_DIR" && find skills agents -type f ! -name '*.md' | sort)
+	done < <(cd "$SOURCE_DIR" && find skills agents __test__ -type f \
+		! -name '*.md' ! -name '*.bats' 2>/dev/null | sort)
 
 	# The ledger's blind spot is exactly why this cannot be allowed to pass
 	# vacuously: zero files found would look identical to zero files drifting.
@@ -344,7 +348,8 @@ ported_components() {
 			echo "orphaned in the port, absent from the source: ${rel}"
 			return 1
 		}
-	done < <(cd "$PORT_DIR" && find skills agents -type f ! -name '*.md' | sort)
+	done < <(cd "$PORT_DIR" && find skills agents __test__ -type f \
+		! -name '*.md' ! -name '*.bats' 2>/dev/null | sort)
 	[ "$found" -gt 0 ] || {
 		echo "no non-Markdown files found under ${PORT_DIR}/{skills,agents}"
 		return 1

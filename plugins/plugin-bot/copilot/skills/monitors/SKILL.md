@@ -14,7 +14,7 @@ Monitors are written in TypeScript and run directly with `node script.ts` — th
 1. **Copy the harness verbatim**: `templates/monitors/lib/poll-monitor.ts` → `<plugin>/monitors/lib/poll-monitor.ts`. Never customize it and never reimplement the loop, debounce, or dedup inline in a monitor script.
 2. **Write the monitor** at `<plugin>/monitors/watch-<thing>.ts`, starting from `templates/monitors/watch-example.ts`: a sample type, a `scan()` holding ALL the I/O, and the four pure handlers (`key`, `fingerprint`, `isClear`, `notify`). Namespace every env knob `<PLUGIN>_<MONITOR>_*`.
 3. **Register it** in `<plugin>/monitors/monitors.json` (start from `templates/monitors/monitors.json`): unique `name`, mandatory `description`, and a shell-form `command` — quote the placeholder, `node "${CLAUDE_PLUGIN_ROOT}/monitors/watch-<thing>.ts"`. Choose `when:` deliberately: `always` (default) for project-state watches, `on-skill-invoke:<skill>` for watches only relevant once a workflow starts.
-4. **Test it** at `<plugin>/__test__/watch-<thing>.test.ts` (vitest, from `templates/__test__/watch-example.test.ts`): drive the exported handlers through the pure `debounceStep` — assert the hold-back, the notify-once, and the clear-then-regress re-fire. No BATS for monitors.
+4. **Test it** at `<plugin>/__test__/watch-<thing>.test.ts` (vitest, from this plugin's own `__test__/watch-example.test.ts` — it sits at the workspace root, not under `templates/`, because that is the only place vitest collects it): drive the exported handlers through the pure `debounceStep` — assert the hold-back, the notify-once, and the clear-then-regress re-fire. No BATS for monitors.
 5. **Verify live**: `node <plugin>/monitors/watch-<thing>.ts --once` prints current findings immediately (no quiet period) and exits. Then `claude plugin validate <plugin> --strict`. A new or edited monitor needs a session restart to pick up — `/reload-plugins` alone does not restart monitors.
 
 ## Checklist
@@ -41,7 +41,7 @@ Apply to any monitor script or `monitors.json` you are about to create or edit. 
 | `templates/monitors/lib/poll-monitor.ts` | `runPollMonitor`, `debounceStep`, `invokedDirectly`, the option/handler types | `<plugin>/monitors/lib/poll-monitor.ts` (verbatim) |
 | `templates/monitors/watch-example.ts` | Worked exemplar: sample type + `scan()` + handlers + entrypoint guard | `<plugin>/monitors/watch-<thing>.ts` (adapt) |
 | `templates/monitors/monitors.json` | Registration exemplar with quoted shell-form command | `<plugin>/monitors/monitors.json` (adapt) |
-| `templates/__test__/watch-example.test.ts` | Handler tests through `debounceStep` — hold-back, dedup, re-fire | `<plugin>/__test__/watch-<thing>.test.ts` (adapt) |
+| `__test__/watch-example.test.ts` (workspace root, not `templates/`) | Handler tests through `debounceStep` — hold-back, dedup, re-fire. This is the one template that also *runs* here, so a change to `poll-monitor.ts` or `watch-example.ts` breaks it immediately | `<plugin>/__test__/watch-<thing>.test.ts` (adapt) |
 
 The template tree mirrors the destination tree, so relative imports survive the copy unchanged and the templates themselves stay testable in place.
 

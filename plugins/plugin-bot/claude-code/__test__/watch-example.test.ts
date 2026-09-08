@@ -1,11 +1,18 @@
-// watch-example.test.ts — vitest template for a poll monitor. Copy to
-// <plugin>/__test__/watch-<thing>.test.ts. Tests drive the monitor's exported
-// handlers through the pure debounceStep — no filesystem, no polling loop.
+// watch-example.test.ts — the monitor-template exemplar, and the test that
+// actually exercises those templates in this repo. Copy it to
+// <plugin>/__test__/watch-<thing>.test.ts when scaffolding a monitor and
+// repoint the two imports at your own monitors/ directory.
+//
+// It lives at the workspace root rather than beside the templates because
+// vitest only collects from a registered project root: under
+// skills/monitors/templates/__test__/ it was never run, so the templates it
+// covers shipped unexecuted. Tests drive the monitor's exported handlers
+// through the pure debounceStep — no filesystem, no polling loop.
 import { describe, expect, it } from "vitest";
-import type { DebounceState } from "../monitors/lib/poll-monitor.js";
-import { debounceStep } from "../monitors/lib/poll-monitor.js";
-import type { ArtifactSample } from "../monitors/watch-example.js";
-import { handlers } from "../monitors/watch-example.js";
+import type { DebounceState } from "../skills/monitors/templates/monitors/lib/poll-monitor.js";
+import { debounceStep } from "../skills/monitors/templates/monitors/lib/poll-monitor.js";
+import type { ArtifactSample } from "../skills/monitors/templates/monitors/watch-example.js";
+import { handlers } from "../skills/monitors/templates/monitors/watch-example.js";
 
 const STABLE_POLLS = 3;
 
