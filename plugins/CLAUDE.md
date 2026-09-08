@@ -1,38 +1,68 @@
-# Plugin Development (plugins/)
+# Plugin development (plugins/)
 
-Context for developing Claude Code plugins in this repo. Applies to all work under `plugins/`.
+Context for developing agent plugins in this repo — Claude Code and GitHub Copilot. Applies to all work under `plugins/`.
 
-## Overview
+## Layout, and why the directory name is the point
 
-Plugins under `plugins/*` ship skills, agents, hooks, commands and MCP servers for Claude Code. They are enabled in working sessions via the local marketplace entry in `.claude-plugin/marketplace.json` (source `./plugins/<name>`).
+```text
+plugins/<target>/            # single-plugin repo
+plugins/<plugin>/<target>/   # multi-plugin repo — this one
+```
 
-## Fetch-first documentation policy
+`<target>` is exactly `claude-code` or `copilot`. **That name is the context signal**: an agent seeing `plugins/*/copilot/**` knows which contract governs the file before reading it. The whole design rests on it, so never put a component directory outside a target workspace — `plugins/__test__/canonical-layout.bats` fails if you do.
 
-Claude Code changes fast: new components, hook events, frontmatter fields and env vars ship constantly, so training-data recall and internal references go stale. Before authoring or auditing a plugin component, fetch the relevant official doc with WebFetch and verify against it — when in doubt, don't guess. Docs mark version-gated behavior ("Requires Claude Code vX.Y.Z"); check gates before relying on a feature. Full doc index: <https://code.claude.com/docs/llms.txt>.
+Here that means `plugins/plugin-bot/{claude-code,copilot}` and `plugins/dogfood/claude-code`. The manifest location differs per host: `.claude-plugin/plugin.json` for `claude-code`, root `plugin.json` for `copilot`. Each target workspace carries a private `package.json` named `@<plugin>/<target>-plugin` so changesets version the two manifests independently.
 
-The plugin-bot plugin's `anthropic-docs` skill carries stamped distillations of all of these docs under `plugins/plugin-bot/skills/anthropic-docs/references/` — check the relevant reference first, escalate to the live URL per its stamp.
+## The three layers
 
-## Official docs by component
+| Layer | Skill | Adds |
+| :-- | :-- | :-- |
+| Portable floor — Agent Skills spec | `agent-plugins-docs` | `SKILL.md` and its frontmatter, progressive disclosure, `references/`, `scripts/`, `assets/` |
+| GitHub Copilot | `copilot-docs` | manifest fields beyond the portable schema, `.agent.md` agents, 14 hook events, 3 handler types |
+| Claude Code | `anthropic-docs` | 33 hook events, 5 handler types, `paths:` auto-load, `userConfig`, `channels`, monitors, output styles |
 
-Fetch the doc matching what you are touching:
+**Write to the narrowest layer that carries the capability, and reach up only deliberately, knowing the reach costs portability.**
 
-- <https://code.claude.com/docs/en/plugins.md> — creating/testing plugins (`--plugin-dir`, `/reload-plugins`), converting standalone config, marketplace submission.
-- <https://code.claude.com/docs/en/plugins-reference.md> — manifest schema, component locations, plugin cache, `${CLAUDE_PLUGIN_ROOT}`/`${CLAUDE_PLUGIN_DATA}`, version management, plugin CLI.
-- <https://code.claude.com/docs/en/plugin-marketplaces.md> — marketplace.json schema, plugin source variants, hosting and team configuration.
-- <https://code.claude.com/docs/en/skills.md> — SKILL.md frontmatter, invocation control, dynamic context injection, skill lifecycle.
-- <https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md> — skill authoring quality: conciseness, descriptions, progressive disclosure, evals.
-- <https://code.claude.com/docs/en/sub-agents.md> — agent frontmatter, plugin-agent restrictions, memory, preloaded skills.
-- <https://code.claude.com/docs/en/hooks.md> — events, matchers, exec vs shell form, exit codes, JSON output, hook types.
-- <https://code.claude.com/docs/en/mcp.md> — server config, plugin-bundled servers and scoped tool naming (`mcp__plugin_<plugin>_<server>__<tool>`), tool search.
-- <https://code.claude.com/docs/en/tools-reference.md> — canonical tool names and permission-rule formats.
-- <https://code.claude.com/docs/en/env-vars.md> — every env var Claude Code reads.
-- <https://code.claude.com/docs/en/channels-reference.md> — channel MCP servers that push events into a session.
+## Fetch-first, three ways
+
+Both hosts ship features faster than training data goes stale. Before authoring or auditing a component, read the reference in the skill for your layer, then escalate to the URL stamped at the top of that reference (`Verified against <url> — <date>`) when it is silent, the claim is version-sensitive, or the stamp looks old. Never answer from memory.
+
+| Layer | Escalation index |
+| :-- | :-- |
+| Portable | <https://agentskills.io/specification.md> |
+| Copilot | <https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference> |
+| Claude Code | <https://code.claude.com/docs/llms.txt> |
+
+**A portable claim settled by a Claude-only page is not settled.** `anthropic-docs` describes Claude Code and `copilot-docs` describes Copilot; only `agent-plugins-docs` answers "does this survive the other host?"
+
+## One-directional authoring
+
+`claude-code/` leads, `copilot/` trails. A change originating in the port is a defect — read `porting-to-copilot` before editing anything under `copilot/`.
+
+```bash
+bash plugins/plugin-bot/claude-code/skills/porting-to-copilot/scripts/port-status.sh \
+  --source plugins/plugin-bot/claude-code \
+  --port plugins/plugin-bot/copilot \
+  --ledger plugins/plugin-bot/copilot/port-status.json \
+  --check
+```
+
+Swap `--check` for `--record` once the port is re-authored, to pin the new hashes.
+
+**A green `--check` does not mean the port is complete.** The ledger tracks `skills/**/*.md` and `agents/**/*.md` and nothing else, so `plugin.json`, `hooks.json` and `.mcp.json` can drift while it stays green. Green means "every ported skill and agent is current".
+
+## Tests
+
+- `plugins/__test__/` — host-agnostic claims, such as the layout itself.
+- `plugins/<plugin>/<target>/__test__/` — host-specific claims.
+
+`pnpm test:bats` runs `bats --recursive plugins`, collecting every level with no registration step. 21 tests today.
 
 ## Local development loop
 
-- Plugins here load through the local marketplace entry in `.claude-plugin/marketplace.json`, so edits take effect in this repo's working sessions.
-- After editing plugin components, have the user run `/reload-plugins`. SKILL.md text changes hot-reload without it; hooks, `.mcp.json` and agents need the reload.
-- Run `claude plugin validate <path> --strict` before considering plugin work done.
+- `pnpm claude` loads both plugins from source (`--plugin-dir ./plugins/plugin-bot/claude-code --plugin-dir ./plugins/dogfood/claude-code`), shadowing any same-named marketplace install for that session. This is the only loop that serves local edits: the `.claude-plugin/marketplace.json` entry is a `git-subdir` source pinned to a GitHub sha, so it never reflects the working tree.
+- After editing hooks, `.mcp.json` or agents, have the user run `/reload-plugins`. `SKILL.md` text is documented to take effect immediately, but that statement is scoped to `@skills-dir` plugins rather than `--plugin-dir` loads — so reload anyway if a skill edit does not seem to land.
+- `claude plugin validate <target-workspace> --strict` before calling Claude Code plugin work done. Copilot documents no validate subcommand; `copilot plugin install ./<workspace>` caches components, so reinstall after each edit.
 - A CLAUDE.md at a plugin's own root is NOT loaded as plugin context — plugins ship context via skills. That is why this guidance lives at the `plugins/` level.
 
 ## Design docs
