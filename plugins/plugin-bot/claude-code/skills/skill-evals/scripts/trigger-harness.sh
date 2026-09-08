@@ -52,8 +52,14 @@ require_value() {
 	# $1 = flag name, $2 = remaining arg count (from "$#" before shifting),
 	# $3 = candidate value (pass "${2-}" from the caller; may be unset/empty)
 	[ "$2" -ge 2 ] || die "$1 requires a value. Run with --help for usage."
+	# Only reject a value that is itself one of this script's own flags — not
+	# every token starting with '-', which would also catch a negative
+	# --runs value or a '-'-prefixed --positives/--negatives filename and
+	# report the wrong problem for both.
 	case "$3" in
-		-*) die "$1 requires a value but got the flag '$3'. Run with --help for usage." ;;
+		--skill | --positives | --negatives | --runs | --transcript-dir | --dry-run | -h | --help)
+			die "$1 requires a value but got the flag '$3'. Run with --help for usage."
+			;;
 	esac
 	[ -n "$3" ] || die "$1 was given an empty value; it requires a value. Run with --help for usage."
 }
