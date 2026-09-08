@@ -28,6 +28,21 @@ if [ "$GH_WRAPPER_TOKEN_VAR" = "UNCONFIGURED_PLUGIN_GH_TOKEN" ]; then
 	echo "gh-wrapper.sh: GH_WRAPPER_TOKEN_VAR is the default placeholder. Edit the lib file and set it to your plugin's namespaced token var (e.g., MYPLUGIN_GH_TOKEN)." >&2
 fi
 
+# Preflight: GH_WRAPPER_TOKEN_VAR is fed to `${!name}` below, so it must be a
+# legal shell identifier. The obvious edit for a plugin named `plugin-bot` is
+# PLUGIN-BOT_GH_TOKEN, and a hyphen makes it illegal: Bash 4+ aborts _gh with
+# "invalid variable name", while Bash 3.2 silently yields empty. That means the
+# mistake passes on stock macOS and fails everywhere the plugin ships. Refuse
+# the name here, at source time, rather than mid-hook.
+if ! case "$GH_WRAPPER_TOKEN_VAR" in
+	[A-Za-z_]*[!A-Za-z0-9_]*) false ;;
+	[A-Za-z_]*) true ;;
+	*) false ;;
+esac then
+	echo "gh-wrapper.sh: GH_WRAPPER_TOKEN_VAR ('$GH_WRAPPER_TOKEN_VAR') is not a legal shell variable name. Use letters, digits and underscores only (e.g., PLUGIN_BOT_GH_TOKEN, not PLUGIN-BOT_GH_TOKEN). Falling back to GH_TOKEN/GITHUB_TOKEN." >&2
+	GH_WRAPPER_TOKEN_VAR="GH_TOKEN"
+fi
+
 # Preflight: warn if gh is not installed; don't fail at source time
 # because not every hook that sources lib helpers needs gh.
 if ! command -v gh >/dev/null 2>&1; then

@@ -356,6 +356,29 @@ SHIM
 			echo "${binary}: _gh_auth_ok did not surface gh's failure: ${output}"
 			return 1
 		}
+
+		# An illegal variable name must not reach `${!name}`. The natural edit
+		# for a plugin named `plugin-bot` is PLUGIN-BOT_GH_TOKEN, and Bash 4+
+		# aborts on it while 3.2 silently yields empty — so this fails only
+		# where the plugin ships, never on the machine it is written on. The
+		# same shape shipped a Critical in hook-debug.sh on this branch.
+		run env -i PATH="${shim}:$PATH" HOME="${WORK}/home" \
+			GH_WRAPPER_TOKEN_VAR=PLUGIN-BOT_GH_TOKEN GH_TOKEN=fallback \
+			"$binary" -c 'set -eu; . "$1"; _gh api /x' _ "${LIB}/gh-wrapper.sh"
+		[ "$status" -eq 0 ] || {
+			echo "${binary}: a hyphenated GH_WRAPPER_TOKEN_VAR aborted _gh (status ${status})"
+			echo "$output"
+			return 1
+		}
+		[[ "$output" == *"not a legal shell variable name"* ]] || {
+			echo "${binary}: no warning for an illegal variable name: ${output}"
+			return 1
+		}
+		[[ "$output" == *"token:fallback"* ]] || {
+			echo "${binary}: did not fall back to GH_TOKEN: ${output}"
+			return 1
+		}
+
 		checked=$((checked + 1))
 	done < <(bash_bins)
 	[ "$checked" -gt 0 ] || {

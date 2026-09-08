@@ -22,10 +22,12 @@ target_workspaces() {
 }
 
 @test "every directory under plugins/ is a plugin dir or the shared test dir" {
+	found=0
 	for entry in "${PLUGINS_DIR}"/*/; do
 		[ -d "$entry" ] || continue
 		name="$(basename "${entry%/}")"
 		[ "$name" = "__test__" ] && continue
+		found=$((found + 1))
 		# A plugin dir must itself contain at least one target workspace.
 		if ! find "${entry%/}" -mindepth 1 -maxdepth 1 -type d \
 			\( -name claude-code -o -name copilot \) | grep -q .; then
@@ -33,13 +35,19 @@ target_workspaces() {
 			return 1
 		fi
 	done
+	[ "$found" -gt 0 ] || {
+		echo "no plugin directories found under plugins/"
+		return 1
+	}
 }
 
 @test "no plugin component directory sits outside a target workspace" {
+	found=0
 	for entry in "${PLUGINS_DIR}"/*/; do
 		[ -d "$entry" ] || continue
 		name="$(basename "${entry%/}")"
 		[ "$name" = "__test__" ] && continue
+		found=$((found + 1))
 		for child in "${entry%/}"/*/; do
 			[ -d "$child" ] || continue
 			cname="$(basename "${child%/}")"
@@ -52,6 +60,10 @@ target_workspaces() {
 			esac
 		done
 	done
+	[ "$found" -gt 0 ] || {
+		echo "no plugin directories found under plugins/"
+		return 1
+	}
 }
 
 @test "every target workspace carries its host's manifest in the right place" {
