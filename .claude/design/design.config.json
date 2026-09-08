@@ -27,7 +27,7 @@
 			"categories": ["architecture", "documentation", "meta"],
 			"designDocsPath": ".claude/design/plugin-bot",
 			"maintainer": "C. Spencer Beggs",
-			"path": "plugins/plugin-bot",
+			"path": "plugins/plugin-bot/claude-code",
 			"userDocs": {
 				"readme": null,
 				"repoDocs": null,

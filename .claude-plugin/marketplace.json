@@ -11,8 +11,7 @@
 		{
 			"name": "plugin-bot",
 			"source": {
-				"path": "plugins/plugin-bot",
-				"sha": "382f2fba05f39a13e7ce0ef09487b3a92d97cccc",
+				"path": "plugins/plugin-bot/claude-code",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/bot.git"
 			}

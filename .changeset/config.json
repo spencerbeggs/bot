@@ -5,6 +5,24 @@
 	"changelog": [
 		"@savvy-web/changelog",
 		{
+			"packages": {
+				"@plugin-bot/claude-code-plugin": {
+					"versionFiles": [
+						{
+							"glob": "plugins/plugin-bot/claude-code/.claude-plugin/plugin.json",
+							"paths": ["$.version"]
+						}
+					]
+				},
+				"@plugin-bot/copilot-plugin": {
+					"versionFiles": [
+						{
+							"glob": "plugins/plugin-bot/copilot/plugin.json",
+							"paths": ["$.version"]
+						}
+					]
+				}
+			},
 			"repo": "spencerbeggs/bot"
 		}
 	],

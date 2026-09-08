@@ -1,11 +1,11 @@
 ---
-status: draft
+status: current
 module: plugin-bot
 category: architecture
 created: 2026-07-10
-updated: 2026-07-10
-last-synced: 2026-07-10
-completeness: 65
+updated: 2026-09-07
+last-synced: 2026-09-07
+completeness: 85
 related:
   - ../demo/architecture.md
   - upstream-docs.md
@@ -16,7 +16,7 @@ implementation-plans:
 
 # plugin-bot - Architecture
 
-A Claude Code plugin, developed in this repo at `plugins/plugin-bot`, whose job is helping develop Claude Code plugins.
+An agent plugin, developed in this repo at `plugins/plugin-bot/`, whose job is helping develop agent plugins — for Claude Code and for GitHub Copilot.
 
 ## Table of contents
 
@@ -31,74 +31,122 @@ A Claude Code plugin, developed in this repo at `plugins/plugin-bot`, whose job 
 
 ## Overview
 
-plugin-bot is the first plugin that originates in this repo rather than being pulled in from another repo via the marketplace manifest (`.claude-plugin/marketplace.json`). It is a migration and expansion of a user-folder agent/skill combo: the `plugin-bash-engineer` agent (`~/.claude/agents/plugin-bash-engineer.md`) and its family of path-based `cc-*` skills (`~/.claude/skills/cc-*`), which together enforce an opinionated layout, scaffolding and audit discipline for plugin bash scripts, hooks, skills and agents.
+plugin-bot is the first plugin that originates in this repo rather than being pulled in from another repo via the marketplace manifest (`.claude-plugin/marketplace.json`). It began as a migration of a user-folder agent/skill combo — the `plugin-bash-engineer` agent and its family of path-based `cc-*` skills — and has since grown into a multi-host plugin with a Claude Code target and a GitHub Copilot target.
 
 **Key design principles:**
 
-- One agent for now, shared skills always. The migration started toward bash/node specialist agents, but the split was consolidated into a single plugin-engineer agent (bash discipline as its named specialization) because all agents would share the same context skills and no Node workload exists yet — specialists get split back out when concrete work justifies them.
-- Path-based skill auto-loading. The enforcer skills fire when matching files are read (e.g. a consumer plugin's hook script), so agents get the relevant contract in context without explicit invocation. This mechanism survived the migration and skills rebuild.
-- Treat training-data recall as untrusted. The hook contract changes; skills point at canonical docs rather than restating them.
+- **The target-workspace directory name is the central mechanism.** Every component lives under `plugins/<plugin>/<target>/`, where `<target>` is exactly `claude-code` or `copilot`. An agent that sees `plugins/*/copilot/**` knows which host's contract governs the file before it reads a byte of it. Nothing else in the tree carries that signal, so nothing may sit outside a target workspace.
+- **Three layers, narrowest first.** The Agent Skills specification is a portable floor; GitHub Copilot is a superset of it; Claude Code is a superset of that. Write to the narrowest layer that carries the capability, and reach up only deliberately — the reach costs portability.
+- **One agent for now, shared skills always.** The bash/Node specialist split was consolidated into a single plugin-engineer agent (bash discipline as its named specialization) because all agents would share the same context skills. Specialists get split back out when concrete work justifies them.
+- **Path-based skill auto-loading.** The enforcer skills fire when matching files are read, so agents get the relevant contract in context without explicit invocation.
+- **Treat training-data recall as untrusted.** Both hosts' contracts change; skills point at canonical docs rather than restating them.
+- **One-directional authoring.** `claude-code/` leads and `copilot/` trails. A change that originates in the port is a defect.
 
-**When to reference this document:** when adding a new agent or skill to the plugin, when verifying parity with (or retiring) the user-folder originals, or when deciding what belongs in the plugin versus a companion Node package.
+**When to reference this document:** when adding a new agent or skill, when adding a target, when changing the layout or the release plumbing, or when deciding what belongs in the plugin versus a companion Node package.
 
 ---
 
 ## Current State
 
-The migration has landed and the skill set has been rebuilt per the [phase 1 skills plan](../../plans/plugin-bot-skills-phase1.md). `plugins/plugin-bot` now contains:
+### Canonical layout
 
-- `.claude-plugin/plugin.json` — the plugin manifest (name `plugin-bot`, version 0.0.0).
-- `agents/plugin-engineer.md` — the single agent, consolidated from bash-engineer (whose operating principles it carries as a named bash-discipline specialization); it preloads `anthropic-docs` and `plugin-setup` and relies on the path enforcers auto-loading.
-- `skills/` — nine skills replacing the legacy `cc-*` family (now archived out of the tree): the `anthropic-docs` context skill, whose `SKILL.md` indexes stamped distillations of the official Claude Code docs under `references/`; five path-based enforcers (`skill-authoring`, `agent-authoring`, `hook-scripts`, `plugin-manifest`, `skill-scripts`) that auto-load on path globs and point into those references; the `plugin-setup` pattern skill, which ships the bootstrap checklist, house-doctrine references (layout, session-env propagation) and the four tested `hooks/lib` script templates verbatim from the user-folder originals; `shelling-out-from-plugins`, the env-hygiene doctrine for third-party CLI calls, copied verbatim as a standalone description-triggered skill; and `persuasion` (formerly cc-nudge-hooks, scope widened), the craft of agent-directed language — hook nudge payloads, skill bodies, agent prompts — with the urgency-tier gradient and injection templates. See the skills directory for the live inventory and the plan for the migration map.
+```text
+plugins/<target>/            # single-plugin repo
+plugins/<plugin>/<target>/   # multi-plugin repo — this one
+```
 
-The skill set follows a three-layer design: a context layer (stamped, refreshable reference distillations with an evidence ladder — see [upstream docs policy](./upstream-docs.md)), a path-enforcer layer (compact checklists triggered by file globs) and pattern/workflow layers deferred to later phases.
+Here that is `plugins/plugin-bot/claude-code`, `plugins/plugin-bot/copilot` and `plugins/dogfood/claude-code`. The manifest location is host-specific: `.claude-plugin/plugin.json` for `claude-code`, a root `plugin.json` for `copilot`. `plugins/__test__/canonical-layout.bats` fails if a component directory appears outside a target workspace.
 
-**Remaining work:**
+### Independent per-target versioning
 
-- A live-session smoke test of path- and description-triggering is the last gate on the skills plan. It requires a fresh session: this plugin loads via `pnpm claude` (`claude --plugin-dir plugins/plugin-bot`), and the rename from plugin-dev happened mid-session, so the current session points at the old folder name.
-- The user-folder originals (`~/.claude/agents/plugin-bash-engineer.md`, `~/.claude/skills/cc-*`) still exist in parallel. Parity with them has not been verified and they have not been retired.
+Each *distributed* target workspace carries a private tracking `package.json` — `@plugin-bot/claude-code-plugin` and `@plugin-bot/copilot-plugin`. Both are `"private": true` with **no `publishConfig`**, which is what keeps them off npm; they exist only to give changesets something to version. `.changeset/config.json` gives each package a `versionFiles` entry pointing at its own plugin manifest, so a changeset bumps the package and its manifest in lockstep, tags, and releases without publishing. The two targets therefore version independently.
 
-**Distribution:** development loads use `--plugin-dir` (the `claude` script in `package.json`), which takes precedence over marketplace installs. The marketplace entry exists in `.claude-plugin/marketplace.json` with a local `./plugins/plugin-bot` source, but the registered `spencerbeggs` marketplace resolves from GitHub, so marketplace installs only work once the entry and plugin are pushed.
+`plugins/dogfood/claude-code` deliberately has **no** tracking package: it is a sandbox and is never distributed.
+
+### The three layers
+
+| Layer | Context skill | Adds |
+| :-- | :-- | :-- |
+| Portable floor — Agent Skills spec | `agent-plugins-docs` | `SKILL.md` and its frontmatter, progressive disclosure, `references/`, `scripts/`, `assets/` |
+| GitHub Copilot | `copilot-docs` | manifest fields beyond the portable schema, `.agent.md` agents, 14 hook events, 3 handler types |
+| Claude Code | `anthropic-docs` | 33 hook events, 5 handler types, `paths:` auto-load, `userConfig`, `channels`, monitors, output styles |
+
+Each of the three carries stamped reference distillations under `references/` and its own escalation URL; see [upstream docs policy](./upstream-docs.md) for the evidence ladder and the rule that a portable claim settled by a Claude-only page is not settled.
+
+### Components
+
+`plugins/plugin-bot/claude-code/` ships one agent and fourteen skills:
+
+- `agents/plugin-engineer.md` — the single agent, whose scope is now both hosts. It preloads the three context skills plus `plugin-setup` and relies on the path enforcers auto-loading.
+- **Context skills (3):** `agent-plugins-docs`, `copilot-docs`, `anthropic-docs` — one per layer.
+- **Path enforcers (6):** `plugin-manifest`, `agent-authoring`, `hook-scripts`, `skill-authoring`, `skill-scripts` and `monitors`. Five of the six had their `paths:` globs widened to carry both dialects, so `agent-authoring` matches `**/agents/**/*.agent.md` and `**/.github/agents/**/*.md` alongside the Claude forms. `monitors` was not: monitors are a Claude Code feature, so its trigger stays Claude-only.
+- **Workflow and pattern skills (5):** `plugin-setup` (scaffolds dual-target, including the per-target release plumbing), `porting-to-copilot` (the re-authoring procedure and the ledger, with `scripts/port-status.sh`), `skill-evals` (trigger and output-quality evals), `shelling-out-from-plugins`, and `persuasion`.
+
+The legacy `cc-*` family and the user-folder originals are superseded by this set.
+
+### The Copilot port
+
+`plugins/plugin-bot/copilot/` carries all fourteen skills and one agent (`agents/plugin-engineer.agent.md`). It is **re-authored, not copied**: `paths:` and `user-invocable` are Claude-only, and Copilot documents no substitution inside skill or agent content, so bodies legitimately differ. Currency is pinned by a content-hash ledger, `plugins/plugin-bot/copilot/port-status.json`, maintained by `port-status.sh --check` / `--record`.
+
+**The ledger's limit is worth stating plainly:** it tracks `skills/**/*.md` and `agents/**/*.md` and nothing else. `plugin.json`, `hooks.json` and `.mcp.json` can drift while the check stays green. Green means "every ported skill and agent is current", not "the port is complete."
+
+### Testing
+
+`pnpm test:bats` runs `bats --recursive plugins`, which collects three levels with no registration step: `plugins/__test__/` for host-agnostic claims such as the layout itself, and each target's own `__test__/` for host-specific ones. 23 tests today across `canonical-layout.bats`, `lib-templates.bats` and `port-drift.bats`.
+
+### Distribution
+
+The marketplace entry in `.claude-plugin/marketplace.json` is a `git-subdir` source: `url` `https://github.com/spencerbeggs/bot.git`, `path` `plugins/plugin-bot/claude-code`. It carries no `sha` until the first release: the repin workflow writes one on a `plugin-release` dispatch, and pinning a commit whose tree predates this layout would name a directory that does not exist there. It resolves from GitHub at whatever commit is pinned, never from disk, so it **cannot serve the working tree** — a distribution channel only, never a development one. Copilot installs can be local (`copilot plugin install ./<workspace>`), and the Copilot target is also registered in a second, separate manifest: `.github/plugin/marketplace.json`, a `source: github` entry pointing at `plugins/plugin-bot/copilot`. The release pipeline repins only the Claude Code target, so that entry is bumped by hand — the same arrangement `@effected/copilot-plugin` has, whose entry in the same file is hand-pinned to a sha. Ours simply has no `sha` yet, having never been pinned.
 
 ---
 
 ## Rationale
 
-**Why the name plugin-bot:** the plugin was originally named plugin-dev, but that collides with Anthropic's official plugin-dev plugin. Renaming to plugin-bot avoids the collision while keeping the "plugin about plugins" identity tied to this repo's bot ecosystem.
+**Why the target-workspace layout:** a single plugin directory cannot say which host's contract governs its contents, and hosts disagree on the manifest location, the agent file extension, the hook roster and the frontmatter keys. Encoding the host in the path makes the contract legible before a file is opened, and lets one plugin serve two hosts without a build step.
 
-**Why migrate out of the user folder:** the user-folder combo is unversioned, single-machine and invisible to the marketplace. As a plugin it becomes versioned in git, distributable through the marketplace and testable in-session during development.
+**Why independent per-target versions:** the two targets change for different reasons and at different rates — a Copilot re-authoring pass is not a Claude Code feature. Separate tracking packages let each manifest carry an honest version and its own tag. `private` with no `publishConfig` is the mechanism that gets the changesets machinery without an npm artifact nobody wants.
 
-**Why multiple agents sharing skills:** bash and Node.js plugin engineering are different expertise domains, but they share most of the plugin-authoring contract (layout, manifest schema, hook I/O, frontmatter discipline). One agent per domain keeps system prompts focused; a shared skill pool keeps the contract single-sourced.
+**Why one-directional authoring:** two editable copies of the same guidance become two sources of truth. Making `claude-code/` the source and `copilot/` the trail means drift has a direction, and the ledger can measure it.
 
-**Companion Node modules:** Claude Code plugins can be paired with a Node package built by this repo's standard pipeline (`packages/*`, see [demo architecture](../demo/architecture.md)). Not used by plugin-bot yet, but it is the pattern to reach for when a plugin needs real programs rather than bash.
+**Why the name plugin-bot:** the plugin was originally named plugin-dev, which collides with Anthropic's official plugin-dev plugin.
+
+**Why migrate out of the user folder:** the user-folder combo is unversioned, single-machine and invisible to the marketplace. As a plugin it becomes versioned in git, distributable and testable in-session during development.
+
+**Companion Node modules:** plugins can be paired with a Node package built by this repo's standard pipeline (`packages/*`, see [demo architecture](../demo/architecture.md)). Not used by plugin-bot yet, but it is the pattern to reach for when a plugin needs real programs rather than bash.
 
 ---
 
 ## Development workflow
 
-Local plugins in this repo are enabled in working sessions via `pnpm claude` (`--plugin-dir` for both `plugins/plugin-bot` and `plugins/dogfood`). The feedback loop is: edit plugin files → user runs `/reload-plugins` → the plugin reboots in-session and its behavior can be observed immediately. Design work should assume this loop rather than a publish-install cycle.
+`pnpm claude` is the only loop that serves local edits. It runs `claude --plugin-dir ./plugins/plugin-bot/claude-code --plugin-dir ./plugins/dogfood/claude-code`, and a `--plugin-dir` load shadows any same-named marketplace install for that session. The marketplace entry is a `git-subdir` source that always resolves from GitHub, so it never reflects the working tree whether or not it is pinned, and design work should assume the `--plugin-dir` loop rather than a publish-install cycle.
 
-Dogfooding runs through the repo-local `/dogfood` skill (`.claude/skills/dogfood`): it tasks plugin-engineer with building a capability inside the `plugins/dogfood` sandbox (a manifest-only plugin, never distributed), validates and reloads it, evaluates the result (skill-creator evals for skills, fixtures/BATS for hooks) and harvests rough edges in plugin-bot's own guidance as follow-up notes — harvest and fix are deliberately separate passes.
+After editing hooks, `.mcp.json` or agents, the user runs `/reload-plugins` to pick the change up. The upstream docs do say a `SKILL.md` edit takes effect immediately, but **that statement is scoped to `@skills-dir` plugins**, not to `--plugin-dir` loads (`plugins/plugin-bot/claude-code/skills/anthropic-docs/references/plugins-reference.md`, the edit/reload/disable note). Treat skill hot-reload as unverified for this loop and reload anyway if an edit does not seem to land.
+
+Run `claude plugin validate <target-workspace> --strict` before calling Claude Code plugin work done. Copilot documents no validate subcommand; `copilot plugin install ./<workspace>` caches components, so reinstall after each edit.
+
+Dogfooding runs through the repo-local `/dogfood` skill (`.claude/skills/dogfood`): it tasks plugin-engineer with building a capability inside the `plugins/dogfood/claude-code` sandbox, validates and reloads it, evaluates the result (skill-creator evals for skills, fixtures/BATS for hooks) and harvests rough edges in plugin-bot's own guidance as follow-up notes — harvest and fix are deliberately separate passes.
 
 ---
 
 ## Future enhancements
 
-- Push the marketplace entry and plugin so remote installs resolve (the entry exists locally in `.claude-plugin/marketplace.json` but the registered marketplace resolves from GitHub).
-- Verify parity between the migrated plugin and the user-folder originals, then retire the originals.
+- Extend the port ledger beyond `skills/**/*.md` and `agents/**/*.md` so manifest and hook drift is caught rather than assumed, or add a companion check for those files.
+- Publish the Copilot target through a Copilot marketplace once one is warranted; today it installs only from a local path.
+- Verify parity with, and retire, the remaining user-folder originals.
 - Possible companion Node module under `packages/*` if the plugin outgrows bash.
 
 ---
 
 ## Related documentation
 
+- [upstream docs policy](./upstream-docs.md) — the three-way fetch-first policy and the doc inventory behind the context skills.
 - [demo architecture](../demo/architecture.md) — the build/test pipeline a companion Node module would use.
-- [upstream docs policy](./upstream-docs.md) — consult the official Claude Code docs before authoring or auditing plugin components; don't guess.
-- `.claude-plugin/marketplace.json` — marketplace manifest this plugin is listed in (local source; remote resolution pending push).
-- `~/.claude/agents/plugin-bash-engineer.md` — user-folder original, kept until parity is verified and it is retired.
+- `plugins/CLAUDE.md` — the loaded-context statement of the layout, the layer model, the fetch-first policy and the ledger's limits; this doc is the durable record behind it.
+- `.claude-plugin/marketplace.json` — the `git-subdir` marketplace entry for the Claude Code target.
+- `.changeset/config.json` — the `versionFiles` wiring that bumps each target's manifest with its tracking package.
 
 ---
 
-**Document Status:** draft — the migration, skills rebuild and agent consolidation have landed but the smoke test, parity verification and the marketplace push are pending.
+**Document Status:** current — the target-workspace layout, per-target versioning, the three-layer skill set and the Copilot port have all landed and are covered by tests.
 
-**Next Steps:** finish the skills plan smoke test in a fresh session, verify parity with the user-folder originals, retire them, push the marketplace entry, then bump completeness and set status to current. Split specialist agents back out only when concrete Node or orchestration workloads justify them.
+**Next Steps:** close the ledger's coverage gap on manifests and hook registrations, retire the user-folder originals, and split specialist agents back out only when concrete Node or orchestration workloads justify them.

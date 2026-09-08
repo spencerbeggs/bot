@@ -1,0 +1,7 @@
+[
+	{
+		"name": "watch-example",
+		"command": "node \"${CLAUDE_PLUGIN_ROOT}/monitors/watch-example.ts\"",
+		"description": "Example: notifies when a watched artifact's error count settles non-zero"
+	}
+]

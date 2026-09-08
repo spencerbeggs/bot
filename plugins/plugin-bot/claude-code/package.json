@@ -1,0 +1,6 @@
+{
+	"name": "@plugin-bot/claude-code-plugin",
+	"version": "0.1.0",
+	"private": true,
+	"description": "This package does not publish to npm. It exists to give changesets something to version, so the Claude Code plugin manifest is bumped, tagged and released in lockstep."
+}
