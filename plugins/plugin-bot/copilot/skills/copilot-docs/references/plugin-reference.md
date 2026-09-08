@@ -55,7 +55,9 @@ tools: ["bash", "edit", "view"]
 ---
 ```
 
-**Open question — do not resolve from memory.** The `tools` identifiers are unsettled. `plugins-creating` shows `["bash", "edit", "view"]`, as quoted above. A shipped port in another repo uses `["read", "edit", "search"]`. At most one is right, and the CLI plugin reference does not document `.agent.md` frontmatter at all, so neither candidate has a schema behind it. Record the ambiguity when it comes up; a later task settles it.
+**Open question — do not resolve from memory.** The `tools` identifiers are unsettled. `plugins-creating` shows `["bash", "edit", "view"]`, as quoted above. A shipped port in another repo uses `["read", "edit", "search"]`. At most one is right, and the CLI plugin reference does not document `.agent.md` frontmatter at all, so neither candidate has a schema behind it.
+
+**Re-verified 2026-09-07, still open.** `copilot --version` found no Copilot CLI on `PATH`, so no local install could confirm which set the CLI honors. `~/.copilot/installed-plugins/spencerbeggs/effected/agents/*.agent.md` carries no `tools:` key at all — a real installed agent, but silent on the question. The Agent Plugins spec repo (`agentplugins/agent-plugins-spec`, both `spec/1.0.0.md` and `spec/1.1.0.md`) settles a related but different point: "commands, hooks, agents, rules, and LSP servers — remain too client-specific for a stable portable contract and are outside the v1 format" — confirming no portable schema will ever adjudicate this, not just that today's one doesn't. Neither candidate gained or lost ground. Record the ambiguity when it comes up; it stays open until a Copilot CLI install or a first-party frontmatter schema settles it.
 
 ## `lspServers`
 
@@ -173,3 +175,5 @@ copilot plugin marketplace remove NAME
 ```
 
 A local plugin installs with `copilot plugin install ./my-plugin`. **Local installs cache their components**: after editing a plugin in place, reinstall it or the CLI keeps serving the previous copy. Verify with `copilot plugin list`, and exercise components with `/agent` and `/skills list`.
+
+**No validator.** The command table above is the complete `copilot plugin` surface documented by the CLI reference — there is no `validate` subcommand, unlike Claude Code's `claude plugin validate --strict`. Re-checked 2026-09-07: `copilot` was not on `PATH` to confirm at the binary, but the documented command list carries no validation verb, so structural correctness for a Copilot target rests entirely on this repo's bats suites.

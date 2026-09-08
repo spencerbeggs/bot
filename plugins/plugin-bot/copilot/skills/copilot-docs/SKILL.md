@@ -42,11 +42,15 @@ All files live in `references/` beside this file. Load only what the task needs.
 | [hooks-reference.md](references/hooks-reference.md) | Anything touching `hooks.json`: the top-level shape, all 14 events and their PascalCase variants, the `command`/`http`/`prompt` handler fields, matcher compilation and which value each event matches on, the per-event output schemas, exit-code and timeout semantics including where Copilot is fail-closed, the fact that hook sources accumulate rather than override, and the cloud-agent restrictions |
 | [customization-surfaces.md](references/customization-surfaces.md) | Deciding whether a capability belongs in a plugin at all: the full path/scope table for instructions, `AGENTS.md`, prompt files, repo/org/enterprise/personal agents, every skill location, hooks and MCP — and which Copilot clients honor each |
 
+## No plugin validator
+
+Copilot ships no counterpart to `claude plugin validate --strict`. The CLI reference's `copilot plugin` command table (reproduced in [plugin-reference.md](references/plugin-reference.md)) has no `validate` verb, and `copilot` was not on `PATH` when this was last checked (2026-09-07) to confirm at the binary. Structural correctness for a `copilot/` target workspace therefore rests on this repo's bats suites — there is no upstream tool to lean on.
+
 ## Open questions
 
 Recorded deliberately. Do not resolve either by picking the more plausible side; a later task settles them against a first-party source.
 
-- **Agent `tools` identifiers.** The `plugins-creating` how-to shows `tools: ["bash", "edit", "view"]`. A shipped port in another repo uses `["read", "edit", "search"]`. At most one is right, and the CLI plugin reference does not specify `.agent.md` frontmatter at all.
+- **Agent `tools` identifiers.** The `plugins-creating` how-to shows `tools: ["bash", "edit", "view"]`. A shipped port in another repo uses `["read", "edit", "search"]`. At most one is right, and the CLI plugin reference does not specify `.agent.md` frontmatter at all. Re-checked 2026-09-07: no Copilot CLI available to install and inspect, and a real installed agent under `~/.copilot/installed-plugins/` carries no `tools:` key to arbitrate. The Agent Plugins spec explicitly puts agents outside its v1 scope, so no portable schema will settle this either.
 - **Manifest search order is Copilot's own.** Copilot's CLI order puts `.plugin/plugin.json` first and includes `.github/plugin/plugin.json`; VS Code's detection order does neither. Agent Plugins 1.0 defines no order. Never merge the two hosts' orders into one list — see `agent-plugins-docs/references/cross-client-behavior.md`.
 
 ## Stamp policy
