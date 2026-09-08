@@ -1,7 +1,7 @@
 {
 	"name": "plugin-bot",
 	"description": "Builds, tests and reviews agent plugins for Claude Code, GitHub Copilot and the portable Agent Skills layer — manifests, skills, agents, hooks and MCP wiring, with a stamped reference distillation per platform layer and an evidence ladder that forbids answering from memory.",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"author": {
 		"name": "C. Spencer Beggs",
 		"email": "spencer@beggs.codes"
