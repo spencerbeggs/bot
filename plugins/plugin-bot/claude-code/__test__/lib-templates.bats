@@ -52,12 +52,23 @@ in_bash() {
 
 @test "every shipped lib template is exercised by this file" {
 	# Guards against a fifth template landing with no coverage at all.
+	#
+	# The search is deliberately over `@test` NAME LINES, not the whole file.
+	# Grepping the file body passes on a bare `# --- foo.sh ---` section-header
+	# comment, so a template could land with a header and no test body and this
+	# would stay green — the vacuous shape this suite exists to reject. Naming
+	# the file in a test name is the house convention and is what every current
+	# template does. The basename is regex-quoted because `.` would otherwise
+	# match any character.
 	found=0
 	for f in "$LIB"/*.sh; do
 		[ -f "$f" ] || continue
 		found=$((found + 1))
-		grep -q "$(basename "$f")" "${BATS_TEST_FILENAME}" || {
-			echo "$(basename "$f") is shipped but never named in this test file"
+		base="$(basename "$f")"
+		pattern="$(printf '%s' "$base" | sed 's/[.[\*^$]/\\&/g')"
+		grep -Eq "^@test \"[^\"]*${pattern}" "${BATS_TEST_FILENAME}" || {
+			echo "${base} is shipped but no @test in this file names it"
+			echo "   a section-header comment is not coverage — add a test for it"
 			return 1
 		}
 	done

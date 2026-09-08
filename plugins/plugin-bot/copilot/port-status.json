@@ -73,7 +73,7 @@
 			"sourceHash": "sha256:4345efae5c0aaf1c4d6a1370c215581e42cf59b3f8209b7609ffb32054fc073d"
 		},
 		"skills/hook-scripts/SKILL.md": {
-			"sourceHash": "sha256:1a8de39ec80439f875c662e89d9d71432b7dca1c5ec6414cac60f2fdfe440a65"
+			"sourceHash": "sha256:f11c353bddfe428635184d871d4a16a18c9e8e723c23b40f2d2498444ffc53f9"
 		},
 		"skills/monitors/SKILL.md": {
 			"sourceHash": "sha256:e8bf853c3806e6723509084e298f817899793533eedc3c583a3e9eaadb647b60"
@@ -97,10 +97,10 @@
 			"sourceHash": "sha256:051cdc5de13ec14c7f4893396cc43e31ca5c5a6ce0e7d9cfbd0dbf759626df89"
 		},
 		"skills/porting-to-copilot/SKILL.md": {
-			"sourceHash": "sha256:7fbf8c6c909cf9efeadb351fc2288b97d3723361319c4fe28f44913e90fab82b"
+			"sourceHash": "sha256:f9e1e7d4034b3203f59e27d373100f1890e53deefff73ac808a5b6e98a344088"
 		},
 		"skills/porting-to-copilot/references/divergence-table.md": {
-			"sourceHash": "sha256:8bdbc5b149676019c613d5d83d4d761f31662bac7d8dab42fa817a923b283d23"
+			"sourceHash": "sha256:c6bed131455b1045c09702bd48786e66b5632fb92f66055948926b5929aa8962"
 		},
 		"skills/shelling-out-from-plugins/SKILL.md": {
 			"sourceHash": "sha256:be178446cd34c02574d8a73f57b98099a6b3a050ae568dc71d7e769572b42f91"

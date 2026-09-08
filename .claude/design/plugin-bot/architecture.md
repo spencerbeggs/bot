@@ -79,8 +79,8 @@ Each of the three carries stamped reference distillations under `references/` an
 
 - `agents/plugin-engineer.md` — the single agent, whose scope is now both hosts. It preloads the three context skills plus `plugin-setup` and relies on the path enforcers auto-loading.
 - **Context skills (3):** `agent-plugins-docs`, `copilot-docs`, `anthropic-docs` — one per layer.
-- **Path enforcers (5):** `plugin-manifest`, `agent-authoring`, `hook-scripts`, `skill-authoring`, `skill-scripts`. Their `paths:` globs now carry both dialects, so `agent-authoring` matches `**/agents/**/*.agent.md` and `**/.github/agents/**/*.md` alongside the Claude forms.
-- **Workflow and pattern skills (6):** `plugin-setup` (scaffolds dual-target, including the per-target release plumbing), `porting-to-copilot` (the re-authoring procedure and the ledger, with `scripts/port-status.sh`), `skill-evals` (trigger and output-quality evals), `monitors` (the Claude-only monitor enforcer and its TypeScript poll harness), `shelling-out-from-plugins`, and `persuasion`.
+- **Path enforcers (6):** `plugin-manifest`, `agent-authoring`, `hook-scripts`, `skill-authoring`, `skill-scripts` and `monitors`. Five of the six had their `paths:` globs widened to carry both dialects, so `agent-authoring` matches `**/agents/**/*.agent.md` and `**/.github/agents/**/*.md` alongside the Claude forms. `monitors` was not: monitors are a Claude Code feature, so its trigger stays Claude-only.
+- **Workflow and pattern skills (5):** `plugin-setup` (scaffolds dual-target, including the per-target release plumbing), `porting-to-copilot` (the re-authoring procedure and the ledger, with `scripts/port-status.sh`), `skill-evals` (trigger and output-quality evals), `shelling-out-from-plugins`, and `persuasion`.
 
 The legacy `cc-*` family and the user-folder originals are superseded by this set.
 
@@ -92,11 +92,11 @@ The legacy `cc-*` family and the user-folder originals are superseded by this se
 
 ### Testing
 
-`pnpm test:bats` runs `bats --recursive plugins`, which collects three levels with no registration step: `plugins/__test__/` for host-agnostic claims such as the layout itself, and each target's own `__test__/` for host-specific ones. 21 tests today across `canonical-layout.bats`, `lib-templates.bats` and `port-drift.bats`.
+`pnpm test:bats` runs `bats --recursive plugins`, which collects three levels with no registration step: `plugins/__test__/` for host-agnostic claims such as the layout itself, and each target's own `__test__/` for host-specific ones. 23 tests today across `canonical-layout.bats`, `lib-templates.bats` and `port-drift.bats`.
 
 ### Distribution
 
-The marketplace entry in `.claude-plugin/marketplace.json` is a `git-subdir` source: `url` `https://github.com/spencerbeggs/bot.git`, `path` `plugins/plugin-bot/claude-code`, pinned to a `sha`. It resolves from GitHub at that commit and **cannot serve the working tree**, so it is a distribution channel only, never a development one. Copilot installs are local (`copilot plugin install ./<workspace>`); the Copilot target is not listed in a marketplace.
+The marketplace entry in `.claude-plugin/marketplace.json` is a `git-subdir` source: `url` `https://github.com/spencerbeggs/bot.git`, `path` `plugins/plugin-bot/claude-code`. It carries no `sha` until the first release: the repin workflow writes one on a `plugin-release` dispatch, and pinning a commit whose tree predates this layout would name a directory that does not exist there. It resolves from GitHub at whatever commit is pinned, never from disk, so it **cannot serve the working tree**; so it is a distribution channel only, never a development one. Copilot installs can be local (`copilot plugin install ./<workspace>`), and the Copilot target is also registered in a second, separate manifest: `.github/plugin/marketplace.json`, a `source: github` entry pointing at `plugins/plugin-bot/copilot`. That entry deliberately carries no `sha` — the release pipeline repins only the Claude Code target, so the Copilot pin is bumped by hand for now, matching the precedent set for `@effected/copilot-plugin`.
 
 ---
 

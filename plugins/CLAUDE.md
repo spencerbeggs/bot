@@ -56,7 +56,7 @@ Swap `--check` for `--record` once the port is re-authored, to pin the new hashe
 - `plugins/__test__/` — host-agnostic claims, such as the layout itself.
 - `plugins/<plugin>/<target>/__test__/` — host-specific claims.
 
-`pnpm test:bats` runs `bats --recursive plugins`, collecting every level with no registration step. 21 tests today.
+`pnpm test:bats` runs `bats --recursive plugins`, collecting every level with no registration step. 23 tests today.
 
 ## Local development loop
 

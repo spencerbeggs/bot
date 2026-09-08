@@ -56,8 +56,21 @@ caveat behind the `${CLAUDE_PLUGIN_ROOT}` Copilot cell: the
 
 A hook **script** resolves its plugin root through the fallback chain in the
 `hook-scripts` skill, and a shell script reads these names as ordinary
-environment variables rather than as host-substituted tokens. So a
-Claude-authored `hooks/**/*.sh` written to that chain runs unchanged under
-Copilot. The port work in the hook layer is the **registration wrapper** and
-the **event vocabulary** — rewrite `hooks.json`, keep the scripts. Budget the
+environment variables rather than as host-substituted tokens. A
+Claude-authored `hooks/**/*.sh` written to that chain therefore needs no
+placeholder rewrite: the same three names are read the same way on both hosts.
+
+What that does **not** establish is that either of the first two chain
+elements is populated under Copilot. Copilot documents which tokens it
+*substitutes*; no source says whether it *exports* `CLAUDE_PLUGIN_ROOT` or
+`PLUGIN_ROOT` into a hook subprocess, and Agent Plugins documents that export
+only for stdio MCP servers. Under Copilot the chain may well fall all the way
+through to its third element — the namespaced value the plugin's own
+`SessionStart` hook exports — which is precisely why the chain has three
+elements and why a bare spelling is never enough. Write the chain, ship the
+`SessionStart` exporter, and the script ports without edits; assume the host
+populates element one or two and it can resolve empty, silently.
+
+The port work in the hook layer is the **registration wrapper** and the
+**event vocabulary** — rewrite `hooks.json`, keep the scripts. Budget the
 port accordingly.

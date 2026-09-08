@@ -98,7 +98,7 @@ the two ever disagree — `agent-authoring` § What does not port.
 
 | Claude Code | Copilot | Consequence |
 | :-- | :-- | :-- |
-| Claude-only hook events | 14 events, camelCase | **Action**: remap per `hook-scripts` § Registration deltas and drop the events with no counterpart. Renames are not mechanical — check each one there. |
+| Claude-only hook events | 14 events, camelCase | **Action**: remap per `hook-scripts` § Layer deltas → Registration shape — what to change when porting, and drop the events with no counterpart. Renames are not mechanical — check each one there. |
 | `mcp_tool` and `agent` handler types | `command`, `http`, `prompt` only | **Action**: re-express each as a `command` handler that performs the same work from a script; there is nothing else to port them to. |
 | `if` permission filters | No documented equivalent | **Action**: move the condition into the handler script — it reads the same event payload and exits early with the permissive decision when the filter would not have matched. Deleting the `if` without moving it widens the hook silently. |
 | `async`, `asyncRewake` | No documented equivalent | **Action**: make the handler synchronous and fast enough for the timeout. If it cannot be, it does not port: omit the hook from the port's `hooks.json` and record the omission in the port's README, since the ledger does not track `hooks.json`. |
