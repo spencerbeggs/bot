@@ -91,7 +91,7 @@ The reason, not just the rule:
 
 - `${CLAUDE_PLUGIN_ROOT}` is defined by Claude Code, which also exports it into the spawned process's environment. Copilot accepts it per the VS Code page, but it is **absent from the Copilot CLI reference's substitution table** — so treat Copilot coverage as the weaker of the two claims and let the next element catch it.
 - `${PLUGIN_ROOT}` is defined by Copilot and by Agent Plugins 1.0, and is not defined by Claude Code.
-- **Their intersection is empty**, which is the whole reason for the chain: neither one alone spans the layers.
+- **No spelling reaches both Claude Code and Agent Plugins 1.0** — those two vocabularies share nothing, and that pair is the whole reason for the chain. Copilot is the overlap, answering to either, so Copilot is never the host that forces your hand; a bare Agent Plugins client alongside Claude Code is.
 - The third element is the namespaced fallback your own `SessionStart` hook exported (`export MYPLUGIN_PLUGIN_ROOT=…` into `$CLAUDE_ENV_FILE`), for subshells and later Bash-tool calls that inherit neither host variable. Name it after your plugin; a generic third element collides with another plugin's.
 
 Substitute your plugin's own prefix for `MYPLUGIN`. See `agent-plugins-docs/references/cross-client-behavior.md` § Placeholder vocabulary for the full matrix and for which sites each token expands in — under Agent Plugins these are `mcp.json` expansions rather than general environment variables, though `PLUGIN_ROOT` and `PLUGIN_DATA` are additionally set in the launched subprocess's environment.
