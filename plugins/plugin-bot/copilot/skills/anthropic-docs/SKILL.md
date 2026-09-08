@@ -40,7 +40,7 @@ All files live in `references/` beside this file. Load only what the task needs.
 
 Every reference opens with `> Verified against <url> — YYYY-MM-DD`. When you correct or extend a reference after checking the live doc, update its stamp date in the same edit. Never edit a reference from memory, and **never bump a stamp you did not actually check** — a false stamp is worse than an old one, because it defeats the staleness signal this whole skill depends on.
 
-**Current stamp state (2026-09-07).** Three files were re-verified against the live docs on that date: `hooks.md`, `hook-events.md`, `plugins-reference.md`. The remaining nine references still carry their `2026-07-10` stamps and have **not** been re-checked since. `hooks.md` and `plugins-reference.md` were found materially wrong at that stamp — treat any other file still on `2026-07-10` as suspect for the same reason and refetch before relying on a load-bearing claim from it.
+**Current stamp state (2026-09-08).** `plugins-reference.md` was re-verified against the live doc on 2026-09-08 and carries that stamp; `hooks.md` and `hook-events.md` were re-verified on 2026-09-07 and carry theirs. The remaining nine references still carry their `2026-07-10` stamps and have **not** been re-checked since. `hooks.md` and `plugins-reference.md` were found materially wrong at that stamp — treat any other file still on `2026-07-10` as suspect for the same reason and refetch before relying on a load-bearing claim from it.
 
 ## Layer scope — this skill is Claude Code only
 

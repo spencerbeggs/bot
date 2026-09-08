@@ -1,6 +1,6 @@
 # Plugins reference
 
-> Verified against <https://code.claude.com/docs/en/plugins-reference> — 2026-09-07
+> Verified against <https://code.claude.com/docs/en/plugins-reference> — 2026-09-08
 
 ## Contents
 
@@ -63,7 +63,7 @@ disallowedTools: Write, Edit
 Detailed system prompt for the agent describing its role, expertise, and behavior.
 ```
 
-**Supported frontmatter**: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `isolation` (only valid value: `"worktree"`).
+**Supported frontmatter**: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `isolation` (`"worktree"` is the only value the subagents reference documents).
 
 **Not supported for plugin-shipped agents (security)**: `hooks`, `mcpServers`, `permissionMode` — the agent still loads, but these fields are ignored and dropped at load time if present, not rejected. See `subagents.md` § Plugin subagent restriction for the workarounds (copying the agent into `.claude/agents/`, or `permissions.allow` in settings — both apply session-wide, not just to the plugin subagent).
 
