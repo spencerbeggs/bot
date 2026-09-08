@@ -63,6 +63,23 @@ to use the escape hatch **zero** times.
 
 Every Consequence cell is an edit to make, not a fact to note.
 
+### Skill frontmatter
+
+Do this first. It is the largest obligation in a port of this shape and the only
+one whose failure is **silent and total** — a skill that never loads produces no
+error, no warning and no wrong answer, just an absence nobody notices.
+
+Copilot's own reference documents **no `SKILL.md` frontmatter fields beyond the
+Agent Skills spec floor**. Keep `name` and `description`; treat every other key
+as needing a decision below.
+
+| Claude Code | Copilot | Consequence |
+| :-- | :-- | :-- |
+| `paths:` glob list | No documented equivalent — and no open-a-file trigger of any kind, in any context | The skill's entire trigger disappears. **Action**: drop the key and rewrite the `description` to absorb it — name the exact file shapes the globs covered and say to read the skill before creating or editing one. Then rewrite every body sentence that presupposes the trigger fired: an opener like "apply this to the file you just opened" assumes something put the skill in front of the reader, and on this host nothing did. Do not port the inversion an agent file may carry either — a Claude agent that says "path triggers do not fire in *your* context" implies they fire in some other context here; they do not. |
+| `user-invocable` | No documented equivalent | **Action**: drop the field. Copilot documents no `/`-menu visibility control, so there is nothing to re-express and dropping it changes no behavior there. |
+| `disable-model-invocation` | No documented equivalent | **Action**: drop the field — but note what goes with it. On Claude Code it keeps a side-effecting skill out of description matching; the port has no such guard. If the skill is side-effecting, say so in the `description` rather than assuming the protection travelled. |
+| Frontmatter `hooks` | No documented equivalent | **Action**: drop the key and re-express the registration in the port's `hooks.json` per the Hooks table below, or record the loss in the port's README. The ledger does not track `hooks.json`. |
+
 ### Agent frontmatter
 
 Restated here because the `agent-authoring` enforcer only fires once an agent
@@ -92,7 +109,8 @@ the two ever disagree — `agent-authoring` § What does not port.
 | :-- | :-- | :-- |
 | `userConfig` | No documented equivalent | **Action**: drop the block and replace every `${user_config.*}` reference with a plain `${ENV_VAR}` the handler reads, documented in the port's README. A left-behind `${user_config.*}` token has nothing to expand it. |
 | `channels`, `dependencies`, `workflows`, output styles, monitors, themes | No documented equivalent | **Action**: omit the manifest keys and do not create the directories. Where one carried behavior a user depends on, re-express it as a **skill** under `skills/` — the one component both hosts read the same way. Where that is not possible, it is a real capability loss: record it in the port's README rather than leaving the reader to infer it from an absence. |
-| `${CLAUDE_PLUGIN_ROOT}` inside SKILL.md **body prose** | Claude Code documents it: `plugins-reference.md` § Environment variables gives `Skill and agent content` as substituting **anywhere the placeholder appears**. Copilot documents no such thing — its CLI reference substitution table has exactly three rows and this is not one | So every such cross-reference, live in the source, may render **literally** in a ported skill. **Action**: for a file inside the same skill, write a plain relative path (`references/divergence-table.md`). For a file in a sibling skill, name the skill and the file in prose — "the `anthropic-docs` skill's `references/plugins-reference.md`" — because a `../` chain violates the one-level-deep file-reference rule in `skill-authoring`. The **source** keeps the placeholder — it is documented there, and this skill's own reference list below uses it for that reason; only the port converts. Expect several per skill: `plugin-manifest/SKILL.md` alone carries seven, all in its closing reference list. |
+| `${CLAUDE_PLUGIN_ROOT}` inside SKILL.md **body prose** | Claude Code documents it: `plugins-reference.md` § Environment variables gives `Skill and agent content` as substituting **anywhere the placeholder appears**. Copilot documents no such thing — its CLI reference substitution table has exactly three rows and this is not one | So every such cross-reference, live in the source, may render **literally** in a ported skill. **Action**: for a file inside the same skill, write a plain relative path (`references/divergence-table.md`). For a file in a sibling skill, name the skill and the file in prose — "the `anthropic-docs` skill's `references/plugins-reference.md`" — because a `../` chain violates the one-level-deep file-reference rule in `skill-authoring`. The **source** keeps the placeholder — it is documented there, and this skill's own reference list below uses it for that reason; only the port converts. Expect several per skill: `plugin-manifest/SKILL.md` alone carries seven, all in its closing reference list. **Resolved question — do not substitute `${PLUGIN_ROOT}` instead.** The tempting fix is to swap the Claude spelling for the portable one, reasoning that `${CLAUDE_PLUGIN_ROOT}`'s Copilot support rests on the VS Code page alone. That is right about the caveat and wrong about the surface: the question is not which token Copilot accepts, it is **whether skill and agent content is a substitution site at all** — and on Copilot it is not. The CLI reference's only documented `${PLUGIN_ROOT}` surface is an LSP server's `cwd` (the `copilot-docs` skill's `references/plugin-reference.md`). Both tokens therefore render literally in a ported `SKILL.md`, so a placeholder swap trades one literal string for another while appearing to fix something. Resolve to a path, never to a different placeholder. |
+| `${CLAUDE_SKILL_DIR}` inside SKILL.md **body prose**, or in a `` !`…` `` command | Claude Code documents it as a skill-content substitution — `skills.md` § Substitution variables, resolving to the skill's own subdirectory rather than the plugin root. Copilot documents nothing of the kind | Same defect class as the row above, and easier to miss because the token carries no `PLUGIN` in its name — a search for the plugin-root placeholder will not surface it. **Action**: replace with a path relative to the skill directory (`scripts/foo.sh`) and say the reader resolves it themselves. **This skill's own step 1 is an instance**: the source above spells the check as `` bash "${CLAUDE_SKILL_DIR}/scripts/port-status.sh" `` and the port must not. |
 
 ## Available scripts
 
