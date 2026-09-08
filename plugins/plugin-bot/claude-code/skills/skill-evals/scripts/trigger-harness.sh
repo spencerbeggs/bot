@@ -31,16 +31,31 @@ Options:
   --dry-run             Print the query plan without invoking the client.
   -h, --help            Show this message.
 
+Requires jq.
+
 Exit codes:
   0  completed (query trigger rates are printed regardless of pass/fail —
-     this harness reports, it does not itself apply the 0.5 threshold)
-  2  usage error
+     this harness reports, applying any pass threshold is the caller's job)
+  2  usage error, or a required tool (jq) is missing
 USAGE
 }
 
 die() {
 	printf 'Error: %s\n' "$1" >&2
 	exit 2
+}
+
+# Reject an option whose value is missing or is itself a flag, rather than
+# letting `shift 2` run off the end of the argument list under set -e with no
+# message, or silently consuming the next flag as a value.
+require_value() {
+	# $1 = flag name, $2 = remaining arg count (from "$#" before shifting),
+	# $3 = candidate value (pass "${2-}" from the caller; may be unset/empty)
+	[ "$2" -ge 2 ] || die "$1 requires a value. Run with --help for usage."
+	case "$3" in
+		-*) die "$1 requires a value but got the flag '$3'. Run with --help for usage." ;;
+	esac
+	[ -n "$3" ] || die "$1 was given an empty value; it requires a value. Run with --help for usage."
 }
 
 # ---------------------------------------------------------------------------
@@ -60,17 +75,18 @@ check_triggered() {
 SKILL="" POSITIVES="" NEGATIVES="" RUNS="" TRANSCRIPT_DIR="" DRYRUN=0
 while [ $# -gt 0 ]; do
 	case "$1" in
-		--skill) SKILL="${2:-}"; shift 2 ;;
-		--positives) POSITIVES="${2:-}"; shift 2 ;;
-		--negatives) NEGATIVES="${2:-}"; shift 2 ;;
-		--runs) RUNS="${2:-}"; shift 2 ;;
-		--transcript-dir) TRANSCRIPT_DIR="${2:-}"; shift 2 ;;
+		--skill) require_value --skill "$#" "${2-}"; SKILL="$2"; shift 2 ;;
+		--positives) require_value --positives "$#" "${2-}"; POSITIVES="$2"; shift 2 ;;
+		--negatives) require_value --negatives "$#" "${2-}"; NEGATIVES="$2"; shift 2 ;;
+		--runs) require_value --runs "$#" "${2-}"; RUNS="$2"; shift 2 ;;
+		--transcript-dir) require_value --transcript-dir "$#" "${2-}"; TRANSCRIPT_DIR="$2"; shift 2 ;;
 		--dry-run) DRYRUN=1; shift ;;
 		-h | --help) usage; exit 0 ;;
 		*) die "Unknown argument '$1'. Run with --help for usage." ;;
 	esac
 done
 
+command -v jq >/dev/null 2>&1 || die "jq is required but was not found in PATH."
 [ -n "$SKILL" ] || die "--skill is required. Run with --help for usage."
 [ -n "$POSITIVES" ] && [ -f "$POSITIVES" ] || die "--positives must name an existing file."
 [ -n "$NEGATIVES" ] && [ -f "$NEGATIVES" ] || die "--negatives must name an existing file."
@@ -81,13 +97,14 @@ mkdir -p "$TRANSCRIPT_DIR"
 
 run_set() {
 	# $1 = file of queries, $2 = expected ("true"/"false")
-	local file="$1" expected="$2" query triggered total i transcript
+	local file="$1" expected="$2" query triggered total i transcript digest
 	while IFS= read -r query; do
 		case "$query" in '' | '#'*) continue ;; esac
 		triggered=0
 		total="$RUNS"
+		digest="$(printf '%s' "$query" | cksum | cut -d' ' -f1)"
 		for i in $(seq 1 "$RUNS"); do
-			transcript="${TRANSCRIPT_DIR}/$(printf '%s' "$query" | cksum | cut -d' ' -f1)-${i}.jsonl"
+			transcript="${TRANSCRIPT_DIR}/${digest}-${i}.jsonl"
 			if [ "$DRYRUN" -eq 1 ]; then
 				continue
 			fi
@@ -98,12 +115,19 @@ run_set() {
 				triggered=$((triggered + 1))
 			fi
 		done
+		# jq owns every byte of the JSON below: --arg/--argjson escape the
+		# query and compute the rate, so a query containing quotes,
+		# backslashes or newlines can never produce malformed output, and
+		# there is no bareword "expected"/"exp" for a shell or awk builtin to
+		# shadow.
 		if [ "$DRYRUN" -eq 1 ]; then
-			printf '{"query":%s,"expected":%s,"runs":%s,"dry_run":true}\n' \
-				"$(printf '%s' "$query" | jq -Rs '. | rtrimstr("\n")')" "$expected" "$total"
+			jq -n --arg query "$query" --argjson expected "$expected" --argjson runs "$total" \
+				'{query: $query, expected: $expected, runs: $runs, dry_run: true}'
 		else
-			awk -v q="$query" -v exp="$expected" -v t="$triggered" -v n="$total" \
-				'BEGIN { printf "{\"query\":\"%s\",\"expected\":%s,\"triggered\":%d,\"runs\":%d,\"rate\":%.2f}\n", q, exp, t, n, t / n }'
+			jq -n --arg query "$query" --argjson expected "$expected" \
+				--argjson triggered "$triggered" --argjson runs "$total" \
+				'{query: $query, expected: $expected, triggered: $triggered, runs: $runs,
+				  rate: (($triggered / $runs * 100 | round) / 100)}'
 		fi
 	done <"$file"
 }
