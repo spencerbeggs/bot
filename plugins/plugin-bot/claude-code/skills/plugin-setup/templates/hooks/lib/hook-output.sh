@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # hook-output.sh — shared helpers for emitting Claude Code hook responses.
 #
 # Source this from any hook script:

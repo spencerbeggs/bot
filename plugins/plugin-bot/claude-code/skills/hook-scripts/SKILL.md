@@ -89,7 +89,7 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${MYPLUGIN_PLUGIN_ROOT:-}}}"
 
 The reason, not just the rule:
 
-- `${CLAUDE_PLUGIN_ROOT}` is defined by Claude Code, which also exports it into the spawned process's environment. Copilot accepts it per the VS Code page, but it is **absent from the Copilot CLI reference's substitution table** — so treat Copilot coverage as the weaker of the two claims and let the next element catch it.
+- `${CLAUDE_PLUGIN_ROOT}` is defined by Claude Code, which also exports it into the spawned process's environment. Copilot accepts it per the VS Code page, but it is **not among the tokens the Copilot CLI reference documents** — so treat Copilot coverage as the weaker of the two claims and let the next element catch it.
 - `${PLUGIN_ROOT}` is defined by Copilot and by Agent Plugins 1.0, and is not defined by Claude Code.
 - **No spelling reaches both Claude Code and Agent Plugins 1.0** — those two vocabularies share nothing, and that pair is the whole reason for the chain. Copilot is the overlap, answering to either, so Copilot is never the host that forces your hand; a bare Agent Plugins client alongside Claude Code is.
 - The third element is the namespaced fallback your own `SessionStart` hook exported (`export MYPLUGIN_PLUGIN_ROOT=…` into `$CLAUDE_ENV_FILE`), for subshells and later Bash-tool calls that inherit neither host variable. Name it after your plugin; a generic third element collides with another plugin's.

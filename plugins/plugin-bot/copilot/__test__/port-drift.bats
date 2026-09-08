@@ -296,3 +296,57 @@ ported_components() {
 	fi
 	[ "$status" -eq 0 ]
 }
+
+# The ledger tracks skills/**/*.md and agents/**/*.md only — its --help says so.
+# That leaves every non-Markdown file in both targets outside currency checking:
+# scaffolded templates and bundled scripts. `--check` is green on a source
+# script edited without its port, and the currency test above would not notice.
+#
+# Byte-identity is the WRONG contract for the .md bodies (they are re-authored
+# per host by design, which is why the ledger hashes only the source side). It
+# is the RIGHT contract here: these files are host-agnostic code and data,
+# copied rather than re-authored, so any difference between the two copies is
+# drift by definition.
+@test "every non-Markdown file is byte-identical across the two targets" {
+	found=0
+	drift=0
+	while IFS= read -r rel; do
+		found=$((found + 1))
+		if [ ! -f "${PORT_DIR}/${rel}" ]; then
+			echo "missing from the port: ${rel}"
+			drift=$((drift + 1))
+			continue
+		fi
+		if ! cmp -s "${SOURCE_DIR}/${rel}" "${PORT_DIR}/${rel}"; then
+			echo "differs between targets: ${rel}"
+			drift=$((drift + 1))
+		fi
+	done < <(cd "$SOURCE_DIR" && find skills agents -type f ! -name '*.md' | sort)
+
+	# The ledger's blind spot is exactly why this cannot be allowed to pass
+	# vacuously: zero files found would look identical to zero files drifting.
+	[ "$found" -gt 0 ] || {
+		echo "no non-Markdown files found under ${SOURCE_DIR}/{skills,agents}"
+		return 1
+	}
+	[ "$drift" -eq 0 ] || {
+		echo "--- fix: copy the source file over its port. These are not"
+		echo "         re-authored per host; they are the same file twice. ---"
+		return 1
+	}
+}
+
+@test "the port carries no non-Markdown file the source lacks" {
+	found=0
+	while IFS= read -r rel; do
+		found=$((found + 1))
+		[ -f "${SOURCE_DIR}/${rel}" ] || {
+			echo "orphaned in the port, absent from the source: ${rel}"
+			return 1
+		}
+	done < <(cd "$PORT_DIR" && find skills agents -type f ! -name '*.md' | sort)
+	[ "$found" -gt 0 ] || {
+		echo "no non-Markdown files found under ${PORT_DIR}/{skills,agents}"
+		return 1
+	}
+}

@@ -55,7 +55,9 @@ target_workspaces() {
 }
 
 @test "every target workspace carries its host's manifest in the right place" {
+	found=0
 	while IFS= read -r ws; do
+		found=$((found + 1))
 		case "$(basename "$ws")" in
 			claude-code)
 				[ -f "${ws}/.claude-plugin/plugin.json" ] || {
@@ -71,6 +73,12 @@ target_workspaces() {
 				;;
 		esac
 	done < <(target_workspaces)
+	# Same guard as every other iterating test here: without it this passes
+	# vacuously the moment target_workspaces stops finding anything.
+	[ "$found" -gt 0 ] || {
+		echo "no target workspaces found"
+		return 1
+	}
 }
 
 @test "tracking packages are named @<plugin>/<target>-plugin, private, unpublishable" {
@@ -137,23 +145,33 @@ target_workspaces() {
 	for mf in "${REPO_ROOT}/.claude-plugin/marketplace.json" \
 		"${REPO_ROOT}/.github/plugin/marketplace.json"; do
 		[ -f "$mf" ] || continue
+		# basename is "marketplace.json" for BOTH manifests, so a failure would
+		# not say which file is wrong. Report the path relative to the repo.
+		rel="${mf#"${REPO_ROOT}/"}"
 		while IFS= read -r p; do
 			[ -n "$p" ] || continue
 			found=$((found + 1))
 			[ -d "${REPO_ROOT}/${p}" ] || {
-				echo "$(basename "$mf"): source.path does not resolve: ${p}"
+				echo "${rel}: source.path does not resolve: ${p}"
 				return 1
 			}
 			case "$(basename "$p")" in
 				claude-code | copilot) ;;
 				*)
-					echo "$(basename "$mf"): ${p} is not a target workspace"
+					echo "${rel}: ${p} is not a target workspace"
 					return 1
 					;;
 			esac
 		done < <(jq -r '
 			.plugins[]
-			| select((.source.url // .source.repo // "") | test("spencerbeggs/bot"))
+			| select(
+				(.source.url // .source.repo // "")
+				# Anchored: a bare "spencerbeggs/bot" substring would also match a
+				# future "spencerbeggs/bot2". The value is an owner/repo pair in
+				# .github/plugin/marketplace.json and a full URL in
+				# .claude-plugin/marketplace.json, so accept either shape.
+				| test("(^|/)spencerbeggs/bot(\\.git)?$")
+			)
 			| .source.path // empty
 		' "$mf")
 	done

@@ -64,7 +64,6 @@ need_value() {
 		-*) die "$1 requires a value (a path) but got the flag '$3'. Run with --help for usage." ;;
 	esac
 	[ -n "$3" ] || die "$1 was given an empty value; it requires a path. Run with --help for usage."
-
 }
 
 # Reject a repeated option rather than letting the last one silently win.

@@ -1,6 +1,6 @@
 # Monitors — Notification Copy and Rate Doctrine
 
-> House doctrine — not an upstream mirror. The `monitors.json` schema and delivery mechanics live in ../../anthropic-docs/references/plugins-reference.md § Monitors.
+> House doctrine — not an upstream mirror. The `monitors.json` schema and delivery mechanics live in the `anthropic-docs` skill's `references/plugins-reference.md` § Monitors.
 
 Every stdout line a monitor prints is injected into the session as a notification the agent will read mid-task, with no surrounding context. The line is therefore a tiny piece of agent-directed prose engineering — the same discipline as a hook's `additionalContext`, compressed to one line. For imperative-force calibration and urgency tiers, the `persuasion` skill is the authority; this reference applies it to the monitor case.
 

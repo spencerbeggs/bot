@@ -1,6 +1,6 @@
 # Plugin Setup — Layout Doctrine
 
-> House doctrine — not an upstream mirror. Platform contracts live in ../anthropic-docs/references/, ../copilot-docs/references/ and ../agent-plugins-docs/references/.
+> House doctrine — not an upstream mirror. Platform contracts live in the `anthropic-docs` skill's `references/`, the `copilot-docs` skill's `references/` and the `agent-plugins-docs` skill's `references/`.
 
 The opinionated directory shape the `plugin-setup` skill scaffolds, and the `hook-scripts` / `plugin-manifest` enforcer skills audit against. Two layers: **where the target workspaces sit** under `plugins/`, and **what one target workspace contains**.
 
@@ -25,7 +25,7 @@ Start single-target. Add `copilot/` only when you actually intend to ship it; an
 ```text
 plugins/<plugin>/
 ├── claude-code/
-│   ├── .claude-plugin/plugin.json      manifest — ../anthropic-docs/references/plugins-reference.md
+│   ├── .claude-plugin/plugin.json      manifest — the `anthropic-docs` skill's `references/plugins-reference.md`
 │   ├── package.json                    @<plugin>/claude-code-plugin, private, no publishConfig
 │   ├── hooks/
 │   │   ├── hooks.json                  registrations only — PascalCase event names
@@ -59,9 +59,9 @@ plugins/<plugin>/
     └── port-status.json                the port ledger — porting-to-copilot skill
 ```
 
-The two manifest locations are not interchangeable: Claude Code reads `.claude-plugin/plugin.json`, Copilot searches four locations in its own order (../copilot-docs/references/plugin-reference.md § Manifest search order). `plugins/__test__/canonical-layout.bats` pins one per target workspace.
+The two manifest locations are not interchangeable: Claude Code reads `.claude-plugin/plugin.json`, Copilot searches four locations in its own order (the `copilot-docs` skill's `references/plugin-reference.md` § Manifest search order). `plugins/__test__/canonical-layout.bats` pins one per target workspace.
 
-Copilot's `hooks.json` is a different schema, not a relocated one: `bash`/`powershell`/`command`/`exec`+`args` handler fields, camelCase event names, and **flat** output objects with no `hookSpecificOutput` wrapper (../copilot-docs/references/hooks-reference.md § Handler types, § Output schemas). Port it by re-authoring, never by copying.
+Copilot's `hooks.json` is a different schema, not a relocated one: `bash`/`powershell`/`command`/`exec`+`args` handler fields, camelCase event names, and **flat** output objects with no `hookSpecificOutput` wrapper (the `copilot-docs` skill's `references/hooks-reference.md` § Handler types, § Output schemas). Port it by re-authoring, never by copying.
 
 ## Why subdirectory per event
 
@@ -107,7 +107,7 @@ Each event entry is a list of `{ matcher, hooks: [{ type, command, … }] }` blo
 }
 ```
 
-Exec form (`args` present) needs no quoting for the path placeholder. Full handler-field contract (`command`/`args`/`async`/`shell`, exec-vs-shell semantics): ../anthropic-docs/references/hooks.md § Command hook fields.
+Exec form (`args` present) needs no quoting for the path placeholder. Full handler-field contract (`command`/`args`/`async`/`shell`, exec-vs-shell semantics): the `anthropic-docs` skill's `references/hooks.md` § Command hook fields.
 
 The bare `${CLAUDE_PLUGIN_ROOT}` above is right **in this file**, which the Claude Code host substitutes before running anything. It is the wrong habit to carry into a bundled `.sh`, where no substitution pass runs at all — see § The dirname-walking anti-pattern.
 
@@ -139,7 +139,7 @@ No `tests/`, no `test/`, no specs living next to the scripts they cover.
 
 ## `bin/` loaders
 
-Optional. Scripts under `bin/` are added to the Bash tool's `PATH` while the plugin is enabled — invokable as bare commands in any Bash tool call, no plugin-root prefix needed at the call site. Use for a plugin-bundled CLI or MCP-server loader script (`start-<server>.sh`). Full component-location table: ../anthropic-docs/references/plugins-reference.md § File locations reference.
+Optional. Scripts under `bin/` are added to the Bash tool's `PATH` while the plugin is enabled — invokable as bare commands in any Bash tool call, no plugin-root prefix needed at the call site. Use for a plugin-bundled CLI or MCP-server loader script (`start-<server>.sh`). Full component-location table: the `anthropic-docs` skill's `references/plugins-reference.md` § File locations reference.
 
 ## The dirname-walking anti-pattern
 
@@ -170,11 +170,11 @@ Same shape when a script needs its own plugin's files — resolve the portable c
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-${PLUGIN_ROOT:-${MYPLUGIN_PLUGIN_ROOT:-}}}"
 ```
 
-`${CLAUDE_PLUGIN_ROOT}` covers Claude Code and Copilot; `${PLUGIN_ROOT}` covers Agent Plugins 1.0 and Copilot. Those two sets **overlap at Copilot**, which is the only host answering to spellings from both vocabularies. What is empty is the intersection of the *host vocabularies* at the ends: **Claude Code and Agent Plugins 1.0 share no spelling at all**, so a script that must resolve on both has no single token available and needs the chain. The third element is the namespaced `SessionStart`-exported fallback for subshells that inherit neither. Caveat: `${CLAUDE_PLUGIN_ROOT}` working under Copilot rests on the VS Code page alone. Full matrix and per-site expansion rules: ../agent-plugins-docs/references/cross-client-behavior.md § Placeholder vocabulary.
+`${CLAUDE_PLUGIN_ROOT}` covers Claude Code and Copilot; `${PLUGIN_ROOT}` covers Agent Plugins 1.0 and Copilot. Those two sets **overlap at Copilot**, which is the only host answering to spellings from both vocabularies. What is empty is the intersection of the *host vocabularies* at the ends: **Claude Code and Agent Plugins 1.0 share no spelling at all**, so a script that must resolve on both has no single token available and needs the chain. The third element is the namespaced `SessionStart`-exported fallback for subshells that inherit neither. Caveat: `${CLAUDE_PLUGIN_ROOT}` working under Copilot rests on the VS Code page alone. Full matrix and per-site expansion rules: the `agent-plugins-docs` skill's `references/cross-client-behavior.md` § Placeholder vocabulary.
 
 **In a bundled `.sh` these are ordinary shell variables**, read from the process environment. No host runs a substitution pass over a script it merely executes, so a name the running host does not set expands to the **empty string** — under Copilot, which sets no `${PLUGIN_DATA}`, `mkdir -p "${PLUGIN_DATA}/cache"` becomes `mkdir -p "/cache"`. That is the opposite of the manifest layer, where an unrecognised `${…}` in a host-parsed file such as `plugin.json`, `mcp.json` or `hooks.json` survives as a literal string. Guard a resolved root for emptiness before joining a path onto it.
 
-Platform contract for the `${CLAUDE_*}` path vars (stability, when each is set, what each is for): ../anthropic-docs/references/plugins-reference.md § Environment variables.
+Platform contract for the `${CLAUDE_*}` path vars (stability, when each is set, what each is for): the `anthropic-docs` skill's `references/plugins-reference.md` § Environment variables.
 
 ## Audit signals
 

@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # hook-debug.sh — shared logging helpers for Claude Code plugin hooks.
 #
 # Source this from any hook script:

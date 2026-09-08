@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # gh-wrapper.sh — env-hygiene wrapper around the gh CLI.
 #
 # Source this from any hook or script that invokes gh:

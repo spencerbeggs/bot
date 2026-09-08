@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # source-session-env.sh — lateral env propagation for plugin hooks.
 #
 # Background: Claude Code auto-sources $CLAUDE_ENV_FILE into Bash-tool

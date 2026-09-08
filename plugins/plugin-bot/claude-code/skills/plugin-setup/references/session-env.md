@@ -1,12 +1,12 @@
 # Plugin Setup — Session Env Doctrine
 
-> House doctrine — not an upstream mirror. Platform contracts live in ../anthropic-docs/references/.
+> House doctrine — not an upstream mirror. Platform contracts live in ${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/.
 
 How a plugin's SessionStart hook persists path/identity state so later hooks, skill scripts, and Bash-tool subprocesses can recover it — and the four `hooks/lib/*.sh` templates that implement the reader/writer halves of the pattern. This is Claude Code doctrine: `$CLAUDE_ENV_FILE` is a Claude Code channel, and Copilot's hook reference documents no equivalent. A `copilot/` workspace that needs the same state must carry it in the envelope or re-resolve it per hook.
 
 ## Why this exists
 
-`$CLAUDE_ENV_FILE` (the platform's own env-propagation channel — see ../anthropic-docs/references/hooks.md § CLAUDE_ENV_FILE) reaches Bash-tool subprocesses but **not** other hook subprocesses. A `PreToolUse` or `PostToolUse` hook never sees exports a `SessionStart` hook wrote there. This doctrine closes that gap with a second, plugin-owned propagation surface.
+`$CLAUDE_ENV_FILE` (the platform's own env-propagation channel — see ${CLAUDE_PLUGIN_ROOT}/skills/anthropic-docs/references/hooks.md § CLAUDE_ENV_FILE) reaches Bash-tool subprocesses but **not** other hook subprocesses. A `PreToolUse` or `PostToolUse` hook never sees exports a `SessionStart` hook wrote there. This doctrine closes that gap with a second, plugin-owned propagation surface.
 
 ## The two propagation surfaces
 
@@ -25,7 +25,7 @@ Every SessionStart hook in this toolchain persists at least the three canonical 
 - `<PLUGIN>_DATA_DIR` — from `$CLAUDE_PLUGIN_DATA` (persists across plugin updates)
 - `<PLUGIN>_PLUGIN_ROOT` — from the portable plugin-root chain (the currently-active install; useful when a mid-session update rotates the path under `/reload-plugins`)
 
-The producer is itself a bundled `.sh`, so it reads these as process-environment variables, not as host-substituted tokens: an unset one expands to the empty string. Resolve the root through the chain rather than one bare spelling — `${CLAUDE_PLUGIN_ROOT}` covers Claude Code and Copilot (the Copilot half resting on the VS Code page alone) and `${PLUGIN_ROOT}` covers Agent Plugins 1.0 and Copilot, so Copilot answers to either while Claude Code and Agent Plugins 1.0 share no spelling at all. `${CLAUDE_PLUGIN_DATA}` is the better data spelling: Copilot's CLI reference documents it as an alias of `${COPILOT_PLUGIN_DATA}`, though whether that alias is separately exported into a bundled script's subprocess environment is not documented. Full matrix: ../agent-plugins-docs/references/cross-client-behavior.md § Placeholder vocabulary.
+The producer is itself a bundled `.sh`, so it reads these as process-environment variables, not as host-substituted tokens: an unset one expands to the empty string. Resolve the root through the chain rather than one bare spelling — `${CLAUDE_PLUGIN_ROOT}` covers Claude Code and Copilot (the Copilot half resting on the VS Code page alone) and `${PLUGIN_ROOT}` covers Agent Plugins 1.0 and Copilot, so Copilot answers to either while Claude Code and Agent Plugins 1.0 share no spelling at all. `${CLAUDE_PLUGIN_DATA}` is the better data spelling: Copilot's CLI reference documents it as an alias of `${COPILOT_PLUGIN_DATA}`, though whether that alias is separately exported into a bundled script's subprocess environment is not documented. Full matrix: ${CLAUDE_PLUGIN_ROOT}/skills/agent-plugins-docs/references/cross-client-behavior.md § Placeholder vocabulary.
 
 Plus whatever plugin-specific identity the plugin owns (`<PLUGIN>_SESSION_ID`, `<PLUGIN>_AGENT_ID`, `<PLUGIN>_GH_TOKEN`, etc.).
 

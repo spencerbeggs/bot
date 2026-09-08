@@ -39,21 +39,21 @@ Agent Plugins itself defines **no** search order — the spec requires the manif
 
 | Placeholder | Claude Code | Copilot | Agent Plugins 1.0 |
 | :-- | :-- | :-- | :-- |
-| `${CLAUDE_PLUGIN_ROOT}` | Defined | Accepted per the VS Code page; **absent from the CLI reference's substitution table** | Not defined |
+| `${CLAUDE_PLUGIN_ROOT}` | Defined | Accepted per the VS Code page; **not among the tokens the CLI reference documents** | Not defined |
 | `${PLUGIN_ROOT}` | Not defined | Defined | Defined (`args`, `env` values, `cwd` in `mcp.json`) |
 | `${CLAUDE_PLUGIN_DATA}` | Defined | Defined, as an alias of `${COPILOT_PLUGIN_DATA}` | Not defined |
 | `${COPILOT_PLUGIN_DATA}` | Not defined | Defined | Not defined |
 | `${PLUGIN_DATA}` | Not defined | **Not defined** | Defined (same expansion sites) |
 | `${COPILOT_PLUGIN_ROOT}` | Not defined | Not defined | Not defined |
 
-The Copilot CLI reference's substitution table has exactly three rows: `${PLUGIN_ROOT}`, `${COPILOT_PLUGIN_DATA}`, and `${CLAUDE_PLUGIN_DATA}` as an alias of the second. Anything else in the Copilot column above is an inference from another page, marked as such.
+The Copilot CLI reference documents exactly three substitution tokens: `${PLUGIN_ROOT}`, `${COPILOT_PLUGIN_DATA}`, and `${CLAUDE_PLUGIN_DATA}` as an alias of the second. Anything else in the Copilot column above is an inference from another page, marked as such.
 
 **Copilot is the overlap.** It is the only host that answers to spellings from both vocabularies — `${PLUGIN_ROOT}` from Agent Plugins and `${CLAUDE_PLUGIN_DATA}` from Claude Code — which is why a Copilot-targeted file has a choice a portable file does not. **No spelling is universal**: no token resolves on Claude Code, Copilot and a bare Agent Plugins client alike, so a script that needs its plugin root on more than one host resolves a chain rather than trusting one variable. And **`${COPILOT_PLUGIN_ROOT}` is defined by nothing** — it appears in no specification and no host's documentation. If you see it in a file, it is a bug, not a dialect. Note that this does *not* generalize to the `COPILOT_*` prefix: `${COPILOT_PLUGIN_DATA}` is real and documented.
 
 Three further cautions:
 
-- **`${PLUGIN_DATA}` is Agent-Plugins-only.** It is not in Copilot's substitution table; VS Code attributes it to Agent Plugins 1.0. Writing it in a Copilot-targeted file yields a literal, unexpanded `${PLUGIN_DATA}` string. For Copilot, write `${COPILOT_PLUGIN_DATA}` or its `${CLAUDE_PLUGIN_DATA}` alias.
-- **The root spelling is the contested one.** `${CLAUDE_PLUGIN_ROOT}` rests on the VS Code page alone and does not appear in the Copilot CLI reference's table. Prefer `${PLUGIN_ROOT}` when targeting Copilot CLI.
+- **`${PLUGIN_DATA}` is Agent-Plugins-only.** Copilot's CLI reference does not document it; VS Code attributes it to Agent Plugins 1.0. Writing it in a Copilot-targeted file yields a literal, unexpanded `${PLUGIN_DATA}` string. For Copilot, write `${COPILOT_PLUGIN_DATA}` or its `${CLAUDE_PLUGIN_DATA}` alias.
+- **The root spelling is the contested one.** `${CLAUDE_PLUGIN_ROOT}` rests on the VS Code page alone and is not among the tokens the Copilot CLI reference documents. Prefer `${PLUGIN_ROOT}` when targeting Copilot CLI.
 - **Under Agent Plugins these are `mcp.json` expansions, not general environment variables.** They expand in `args`, `env` values and `cwd`, and never in `command`, `env` keys, component locations, `url` or `headers`. `PLUGIN_ROOT` and `PLUGIN_DATA` are additionally set in the launched subprocess's environment, which is what a bundled script can read.
 
 ## Where each host looks for skills

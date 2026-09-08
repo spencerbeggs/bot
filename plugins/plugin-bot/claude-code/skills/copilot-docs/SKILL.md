@@ -44,7 +44,7 @@ All files live in `references/` beside this file. Load only what the task needs.
 
 ## No plugin validator
 
-Copilot ships no counterpart to `claude plugin validate --strict`. The CLI reference's `copilot plugin` command table (reproduced in [plugin-reference.md](references/plugin-reference.md)) has no `validate` verb, and `copilot` was not on `PATH` when this was last checked (2026-09-07) to confirm at the binary. Structural correctness for a `copilot/` target workspace therefore rests on this repo's bats suites — there is no upstream tool to lean on.
+Copilot ships no counterpart to `claude plugin validate --strict`. The `copilot plugin` commands documented by the CLI reference (reproduced as a table in [plugin-reference.md](references/plugin-reference.md)) has no `validate` verb, and `copilot` was not on `PATH` when this was last checked (2026-09-07) to confirm at the binary. Structural correctness for a `copilot/` target workspace therefore rests on this repo's bats suites — there is no upstream tool to lean on.
 
 ## Open questions
 

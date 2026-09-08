@@ -87,9 +87,6 @@ pass burns a with/without pair per case per iteration. Reach for:
 
 ## Read next
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/agent-plugins-docs/references/skill-authoring-guidance.md`
-  § Testing a description, § Evaluating skill output quality — the
-  methodology this skill points to rather than restates.
 - `references/eval-operations.md` — `evals.json` schema, the
   `iteration-N/<eval>/{with_skill,without_skill}` workspace, the analysis
   matrix beyond the drop-both-pass rule above, and the bundled trigger-eval

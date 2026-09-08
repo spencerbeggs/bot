@@ -46,8 +46,8 @@ Every reference opens with `> Verified against <url> — YYYY-MM-DD`. When you c
 
 `anthropic-docs` documents the **Claude Code layer**. Every claim in `references/` is a claim about Claude Code specifically, verified against `code.claude.com/docs`. It is not a portability authority and must not be read as one.
 
-- **Portable claims belong to the sibling skill** [`agent-plugins-docs`](../agent-plugins-docs/SKILL.md): the Agent Skills specification, the Agent Plugins 1.0 manifest, the placeholder vocabulary, and which behavior actually survives moving between hosts. When the question is "will this work outside Claude Code?", that skill answers it — do not infer the answer from a file here.
-- **Copilot-specific claims belong to** [`copilot-docs`](../copilot-docs/SKILL.md).
+- **Portable claims belong to the sibling skill** [`agent-plugins-docs`](${CLAUDE_PLUGIN_ROOT}/skills/agent-plugins-docs/SKILL.md): the Agent Skills specification, the Agent Plugins 1.0 manifest, the placeholder vocabulary, and which behavior actually survives moving between hosts. When the question is "will this work outside Claude Code?", that skill answers it — do not infer the answer from a file here.
+- **Copilot-specific claims belong to** [`copilot-docs`](${CLAUDE_PLUGIN_ROOT}/skills/copilot-docs/SKILL.md).
 
 **Reaching for a Claude-only feature costs portability.** These have no equivalent in the portable layer, and a component that depends on one is Claude Code only by construction:
 

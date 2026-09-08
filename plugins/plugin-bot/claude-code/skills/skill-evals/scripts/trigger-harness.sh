@@ -37,6 +37,15 @@ Exit codes:
   0  completed (query trigger rates are printed regardless of pass/fail —
      this harness reports, applying any pass threshold is the caller's job)
   2  usage error, or a required tool (jq) is missing
+
+READ THIS BEFORE TRUSTING A RATE. Invoking the client is a TODO in the run
+loop below — nothing here actually runs a query, so no transcript is ever
+written, so check_triggered() finds no file and every query reports "rate":0
+whether or not the skill would have fired. A run of all-zeroes therefore means
+"not wired up yet", NOT "the skill never triggers", and the two are
+indistinguishable from this output alone. Fill in the invocation first, then
+confirm on a query you know should fire that this harness reports a non-zero
+rate, before reading any result as a finding.
 USAGE
 }
 
