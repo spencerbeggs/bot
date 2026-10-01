@@ -148,7 +148,7 @@ Wrong:
 ```bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"      # walks plugin install, not user project!
-DESIGN_DIR="$PROJECT_ROOT/.claude/design"
+STATE_DIR="$PROJECT_ROOT/.myplugin"
 ```
 
 This computes `PROJECT_ROOT` relative to the script's own location. When the plugin is installed normally, the script lives under a cache install directory, not the user's project, so `../..` from `scripts/` lands inside the plugin. Works only when a developer happens to run the script from a clone — breaks for every real install.
@@ -161,7 +161,7 @@ Right:
 # in Bash-tool subprocs and hook subprocs). Fall back to git for standalone
 # invocation outside Claude Code.
 PROJECT_DIR="${MYPLUGIN_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}}"
-DESIGN_DIR="$PROJECT_DIR/.claude/design"
+STATE_DIR="$PROJECT_DIR/.myplugin"
 ```
 
 Same shape when a script needs its own plugin's files — resolve the portable chain rather than dirname-walking:

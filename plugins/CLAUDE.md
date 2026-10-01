@@ -56,7 +56,7 @@ Swap `--check` for `--record` once the port is re-authored, to pin the new hashe
 - `plugins/__test__/` — host-agnostic claims, such as the layout itself.
 - `plugins/<plugin>/<target>/__test__/` — host-specific claims.
 
-`pnpm test:bats` runs `bats --recursive plugins`, collecting every level with no registration step. 23 tests today.
+`pnpm test:bats` runs `bats --recursive plugins`, collecting every level with no registration step.
 
 ## Local development loop
 
@@ -65,7 +65,12 @@ Swap `--check` for `--record` once the port is re-authored, to pin the new hashe
 - `claude plugin validate <target-workspace> --strict` before calling Claude Code plugin work done. Copilot documents no validate subcommand; `copilot plugin install ./<workspace>` caches components, so reinstall after each edit.
 - A CLAUDE.md at a plugin's own root is NOT loaded as plugin context — plugins ship context via skills. That is why this guidance lives at the `plugins/` level.
 
-## Design docs
+## Knowledge bundle
 
-- Architecture → `@../.claude/design/plugin-bot/architecture.md` — Load when: changing plugin-bot's structure, components or development workflow.
-- Upstream docs policy → `@../.claude/design/plugin-bot/upstream-docs.md` — Load when: deciding which official doc to fetch or updating the doc-link inventory.
+- Claude Code target → `../okf/modules/plugin-bot-claude-code.md` — Load when: changing plugin-bot's skills, agent or structure.
+- Copilot target → `../okf/modules/plugin-bot-copilot.md` — Load when: editing anything under `copilot/` or reasoning about the port.
+- Layer and fetch-first rule → `../okf/conventions/narrowest-layer-fetch-first.md` — Load when: authoring or auditing a plugin component, or deciding which official doc to fetch.
+- One-directional authoring → `../okf/decisions/one-directional-authoring.md` — Load when: a change seems to belong in `copilot/` first.
+- Port ledger limits → `../okf/limitations/port-ledger-coverage.md` — Load when: interpreting a `port-status.sh --check` result.
+- Local dev loop → `../okf/runbooks/local-plugin-dev-loop.md` — Load when: loading, reloading or validating plugins locally.
+- Refresh the port → `../okf/runbooks/refresh-copilot-port.md` — Load when: Claude Code skills or agents changed and the Copilot port is stale.

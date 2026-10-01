@@ -1,0 +1,12 @@
+#:schema https://raw.githubusercontent.com/spencerbeggs/okfit/main/schemas/1.0/config.json
+
+[bundle]
+path = "okf"
+profile = "software-project"
+
+[actors]
+agent = "okfit/claude-code"
+humans = ["human:spencer"]
+
+[tags.portability]
+description = "Concerns what survives across agent hosts: the portable Agent Skills floor versus Claude Code- or Copilot-only capabilities."
