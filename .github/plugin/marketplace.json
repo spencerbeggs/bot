@@ -24,7 +24,7 @@
 				"source": "github",
 				"repo": "spencerbeggs/effected",
 				"sha": "41327b9656d86db47749ee161e198c716853d391",
-				"path": "plugins/copilot"
+				"path": "plugin/builds/copilot"
 			}
 		},
 		{
