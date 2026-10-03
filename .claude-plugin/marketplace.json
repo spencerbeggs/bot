@@ -61,6 +61,15 @@
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor.git"
 			}
+		},
+		{
+			"name": "pluginfinity",
+			"source": {
+				"path": "plugin/builds/pluginfinity",
+				"sha": "",
+				"source": "git-subdir",
+				"url": "https://github.com/spencerbeggs/pluginfinity.git"
+			}
 		}
 	]
 }

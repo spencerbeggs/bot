@@ -43,6 +43,24 @@
 				"repo": "spencerbeggs/bot",
 				"path": "plugins/plugin-bot/copilot"
 			}
+		},
+		{
+			"name": "pluginfinity",
+			"description": "How to author an agent plugin as one pluginfinity source and build it for Claude Code and GitHub Copilot: the config, skill and agent frontmatter, targets and host blocks, hooks, and every build finding with its fix.",
+			"author": {
+				"name": "C. Spencer Beggs",
+				"url": "https://spencerbeg.gs"
+			},
+			"homepage": "https://github.com/spencerbeggs/pluginfinity#readme",
+			"keywords": ["pluginfinity", "agent-plugin", "claude-code", "copilot", "skills"],
+			"license": "MIT",
+			"repository": "https://github.com/spencerbeggs/pluginfinity",
+			"source": {
+				"source": "github",
+				"repo": "spencerbeggs/pluginfinity",
+				"path": "plugin/pluginfinity/builds/copilot",
+				"sha": ""
+			}
 		}
 	]
 }
