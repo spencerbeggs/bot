@@ -39,7 +39,7 @@
 			"name": "effected",
 			"source": {
 				"path": "plugin/builds/claude",
-				"sha": "28d6fe490b3b573507dd71bdc5921a8b898cb79e",
+				"sha": "6741498c13ca79e0c78d52762317f2d395be5ecf",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/effected.git"
 			}
