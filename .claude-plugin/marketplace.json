@@ -48,7 +48,7 @@
 			"name": "okfit",
 			"source": {
 				"path": "plugin/builds/claude-code",
-				"sha": "c2c2ce91f5864d2684820f7efecdb6b540085890",
+				"sha": "3418152ec858ab3a8aaf435cc065b07f5db639e7",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/okfit.git"
 			}
