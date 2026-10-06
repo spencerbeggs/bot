@@ -28,6 +28,24 @@
 			}
 		},
 		{
+			"name": "okfit",
+			"description": "Teaches Claude Code the Open Knowledge Format (OKF) v0.2 and keeps a repository's okf/ knowledge bundle current through skills, one docs agent, and the okfit CLI and MCP server.",
+			"author": {
+				"name": "C. Spencer Beggs",
+				"url": "https://spencerbeg.gs"
+			},
+			"homepage": "https://github.com/spencerbeggs/okfit#readme",
+			"keywords": ["okf", "documentation"],
+			"license": "MIT",
+			"repository": "https://github.com/spencerbeggs/okfit",
+			"source": {
+				"source": "github",
+				"repo": "spencerbeggs/okfit",
+				"path": "plugin/builds/copilot",
+				"sha": ""
+			}
+		},
+		{
 			"name": "plugin-bot",
 			"description": "Builds, tests and reviews agent plugins for Claude Code, GitHub Copilot and the portable Agent Skills layer — manifests, skills, agents, hooks and MCP wiring, with a stamped reference distillation per platform layer and an evidence ladder that forbids answering from memory.",
 			"author": {
