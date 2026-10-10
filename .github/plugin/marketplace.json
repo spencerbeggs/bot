@@ -97,6 +97,23 @@
 				"path": "plugins/pluginfinity/builds/copilot",
 				"sha": "24ea9b436bd2b04f56320ee1c2c65c4de94c6d04"
 			}
+		},
+		{
+			"name": "vitest-agent",
+			"description": "Vitest test data, coverage analysis, TDD orchestration and notes for LLM coding agents, served by the vitest-agent MCP server and recorded by lifecycle hooks.",
+			"author": {
+				"name": "C. Spencer Beggs",
+				"url": "https://spencerbeg.gs"
+			},
+			"homepage": "https://github.com/spencerbeggs/vitest-agent",
+			"repository": "https://github.com/spencerbeggs/vitest-agent.git",
+			"license": "MIT",
+			"source": {
+				"source": "github",
+				"repo": "spencerbeggs/vitest-agent",
+				"path": "plugin/builds/copilot",
+				"sha": ""
+			}
 		}
 	]
 }
