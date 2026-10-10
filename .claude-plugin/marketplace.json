@@ -56,7 +56,7 @@
 		{
 			"name": "api-docs",
 			"source": {
-				"path": "plugin",
+				"path": "plugin/builds/claude",
 				"sha": "503903c37f6626305255a4588a73a52d6b545d91",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/rspress-plugin-api-extractor.git"
