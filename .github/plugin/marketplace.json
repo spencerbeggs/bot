@@ -112,7 +112,7 @@
 				"source": "github",
 				"repo": "spencerbeggs/vitest-agent",
 				"path": "plugin/builds/copilot",
-				"sha": "c35aeb3c28bf29e30ddea69a0060fbb3fe8f6653"
+				"sha": "69a0799cfe01b7ff7b5cbd75de7c690ea5ff06f9"
 			}
 		}
 	]
