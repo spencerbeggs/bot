@@ -41,7 +41,7 @@
 			"source": {
 				"source": "github",
 				"repo": "spencerbeggs/effected",
-				"sha": "6050d2fa98bbc3e83fa55c4886d434bd15e77260",
+				"sha": "80aeac58b563d168deef117fa022c1b27a4c077e",
 				"path": "plugin/builds/copilot"
 			}
 		},
