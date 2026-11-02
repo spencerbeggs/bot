@@ -27,19 +27,10 @@
 			}
 		},
 		{
-			"name": "design-docs",
-			"source": {
-				"path": "plugin",
-				"sha": "180d84d82b76d29453a6043c91f4a9a3b655969d",
-				"source": "git-subdir",
-				"url": "https://github.com/spencerbeggs/design-docs-plugin.git"
-			}
-		},
-		{
 			"name": "effected",
 			"source": {
 				"path": "plugin/builds/claude",
-				"sha": "f71ba33ac22633eed2baa3af6ead11304155f44b",
+				"sha": "6bfb5ed13c026a2bced5f83d0607d465dc7436aa",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/effected.git"
 			}
