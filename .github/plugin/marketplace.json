@@ -41,7 +41,7 @@
 			"source": {
 				"source": "github",
 				"repo": "spencerbeggs/effected",
-				"sha": "b7efc4d250ea25ebf3824310e4e132acce177208",
+				"sha": "0b59ef50d270bac16abbb7729cf4326d16de63f9",
 				"path": "plugin/builds/copilot"
 			}
 		},
@@ -60,7 +60,7 @@
 				"source": "github",
 				"repo": "spencerbeggs/okfit",
 				"path": "plugin/builds/copilot",
-				"sha": "25f58c0be938115c499a6dadfea0e88f59194002"
+				"sha": "e2a8811bac69141bb731fffde537c32a77556961"
 			}
 		},
 		{
@@ -112,7 +112,7 @@
 				"source": "github",
 				"repo": "spencerbeggs/vitest-agent",
 				"path": "plugin/builds/copilot",
-				"sha": "e77f8b001a53d2fb9b4993ce18cf165243f97f04"
+				"sha": "912e24a7c42a2aaac4bb340964ef27afe311c377"
 			}
 		}
 	]
