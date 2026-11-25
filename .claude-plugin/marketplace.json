@@ -57,7 +57,7 @@
 			"name": "pluginfinity",
 			"source": {
 				"path": "plugins/pluginfinity/builds/claude",
-				"sha": "24ea9b436bd2b04f56320ee1c2c65c4de94c6d04",
+				"sha": "7a1c915ffe59a2180811cb5000e0a4eda144a37f",
 				"source": "git-subdir",
 				"url": "https://github.com/spencerbeggs/pluginfinity.git"
 			}
