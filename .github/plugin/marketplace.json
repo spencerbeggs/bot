@@ -23,7 +23,7 @@
 			"source": {
 				"source": "github",
 				"repo": "spencerbeggs/tsdoctor",
-				"sha": "c09154c487701ebb56027e2ddbb7ef8af613f24c",
+				"sha": "4b11499a128f37d1fb03d67fdde72db243777e03",
 				"path": "plugin/builds/copilot"
 			}
 		},
